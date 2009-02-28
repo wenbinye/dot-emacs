@@ -27,6 +27,7 @@
     (define-key c-mode-map "\t" 'clibpc-complete-function)
     (define-key c-mode-map "\C-c\C-v" 'gtk-find-doc)
     (eldoc-mode 1)
+    (setq comment-style 'extra-line)
     (set (make-local-variable 'eldoc-documentation-function)
          'clibpc-eldoc-function)
     ;; (expand-add-abbrevs c-mode-abbrev-table expand-c-sample-expand-list)

@@ -29,7 +29,7 @@
         (gtk-perl-mode 1))))
 
 (deh-section "inf-perl"
-  (setq inf-perl-start-file "~/.emacs.d/.psh_rc")
+  (setq inf-perl-start-file "~/.emacs.d/.pshrc")
   (add-hook 'inf-perl-mode-hook
             (lambda ()
               (setq comint-input-ring-file-name "~/.emacs.d/.psh_history")
@@ -53,3 +53,7 @@
 
 (add-hook 'xs-mode-hook
              (lambda () (setq c-electric-flag nil)))
+
+(add-hook 'pod-mode-hook
+          (lambda ()
+            (define-key pod-mode-map "\C-c\C-v" 'pde-pod-to-manpage)))

@@ -241,7 +241,10 @@ backup file name and revert to it"
 ;;;###autoload 
 (defun my-count-ce-word (beg end)
   "Count Chinese and English words in marked region."
-  (interactive "r")
+  (interactive
+   (if (and mark-active transient-mark-mode)
+       (list (region-beginning) (region-end))
+     (list (point-min) (point-max))))
   (let ((cn-word 0)
         (en-word 0)
         (total-word 0)
@@ -345,20 +348,25 @@ that your video hardware might not support 50-line mode."
   (interactive)
   (let ((inhibit-read-only t)
         (modify-p (buffer-modified-p))
-        start color)
+        color ov)
+    (setq tab-width 8)
     (save-excursion
       (goto-char (point-min))
+      (remove-overlays (point-min) (point-max))
       (while (not (eobp))
-        (when (looking-at "\\([0-9]+\\)\\s-+\\([0-9]+\\)\\s-+\\([0-9]+\\)")
-          (setq color (format "#%02x%02x%02x"
+        (when (looking-at "[ \t]*\\([0-9]+\\)\\s-+\\([0-9]+\\)\\s-+\\([0-9]+\\)\\s-+")
+          (setq ov (make-overlay (point) (point))
+                color (format "#%02x%02x%02x"
                               (string-to-number (match-string 1))
                               (string-to-number (match-string 2))
-                              (string-to-number (match-string 3)))
-                start (match-end 0))
-          (put-text-property start (+ start 2)
+                              (string-to-number (match-string 3))))
+          (overlay-put ov 'before-string (concat color "\t"))
+          (put-text-property (match-end 3) (match-end 0)
                              'face (cons 'background-color color)))
         (forward-line 1))
-      (set-buffer-modified-p modify-p))))
+      (set-buffer-modified-p modify-p))
+    (view-mode 1)))
+
 ;;;###autoload
 (defun ywb-describe-keymap (keymap)
   (interactive (list (completing-read "Keymap: " obarray
@@ -372,6 +380,7 @@ that your video hardware might not support 50-line mode."
       (insert (substitute-command-keys (format "\\{%s}" keymap)))
       (run-hooks 'temp-buffer-show-hook)))
   (display-buffer (help-buffer)))
+
 ;;;###autoload
 (defun when-is-lunar-new-year (&optional year)
   (interactive "P")
@@ -394,6 +403,7 @@ that your video hardware might not support 50-line mode."
         (message "下一个春节: %d年%d月%d日  %s年"
                  (car (cdr (cdr new-year))) (car new-year) (car (cdr new-year))
                  (aref cal-china-x-zodiac-name (mod (+ 8 year) 12)))))))
+
 ;; folding-summary
 ;;;###autoload
 (defun ywb-folding-summary (beg end)
@@ -503,12 +513,21 @@ that your video hardware might not support 50-line mode."
         (perform-replace "\n" "\t" nil nil nil nil nil beg (point))
         (forward-line 1)))))
 
-;;;###autoload
-(defun ywb-show-format-time-string (locale)
-  (interactive "sLocale: ")
-  (let ((system-time-locale locale))
-    (with-current-buffer (get-buffer-create "*format-time*")
-      (erase-buffer)
-      (dolist (s (append "aAbBcCdDehHIjklmMnprRStTUwWxXyYZz" nil))
-        (insert (format "%%%c %s\n" s
-                        (format-time-string (format "%%%c" s))))))))
+(defun ywb-quotify-region (char beg end)
+  (interactive "sQuote char: \nr")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region beg end)
+      (goto-char (point-min))
+      (skip-syntax-forward "^w")
+      (while (not (eobp))
+        (insert "\"")
+        (skip-chars-forward "-a-zA-Z")
+        (insert "\"")
+        (skip-syntax-forward "^w")))))
+
+;;;###autoload 
+(define-derived-mode asciidoc-mode outline-mode "AsciiDoc"
+  "Major mode for editing asciidoc file"
+  (setq outline-regexp "[=\f]+")
+  )

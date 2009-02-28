@@ -1,7 +1,7 @@
 ;; get text with property
 (defun ywb-get-line ()
   (ywb-get-region (line-beginning-position) (line-end-position)))
-(defun ywb-get-region (start end arg)
+(defun ywb-get-region (start end &optional arg)
   (interactive "r\nP")
   (let ((line  (format "%S" (funcall (if arg
                                          'buffer-substring-no-properties
@@ -99,8 +99,11 @@
   (with-temp-buffer
     (dolist (file
              (append
-              (directory-files "~/.emacs.d/config/" t "func-.*.el")
-              (directory-files "~/.emacs.d/site-lisp/mycontrib/" t ".*.el")))
+              (directory-files "~/.emacs.d/config/" t "func-.*.el$")
+              (directory-files "~/.emacs.d/site-lisp/mycontrib/" t ".*.el$")))
       (unless (file-directory-p file)
         (generate-file-autoloads file)))
     (write-region (point-min) (point-max) "~/.emacs.d/config/100-loaddefs.el")))
+
+(defmacro my (&rest args)
+  `(mapc 'make-local-variable ',args))

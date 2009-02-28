@@ -53,8 +53,8 @@
 (setq delete-old-versions t)
 (setq kept-old-versions 2)
 (setq dired-kept-versions 1)
-(setq backup-directory-alist '(("." . "~/.emacs.d/backup")
-                               ("\.pl$" . "~/.emacs.d/src_backup")))
+;;; DO NOT depends on the backup, it is not really useful
+(setq backup-directory-alist '(("." . "~/.emacs.d/backup")))
 (setq backup-by-copying t)
 ;; 默认目录
 (setq default-directory "~/")
@@ -86,7 +86,7 @@
   (set-register ?t '(file . "~/temp"))
   (set-register ?d '(file . "~/downloads")))
 
-;; printer
+;; prevent no response if click the memu in File
 (fset 'print-buffer 'ignore)
 (setq lpr-command "")
 (setq printer-name "")
@@ -102,7 +102,6 @@
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
  '(abbrev-mode t)
- '(ahk-syntax-directory "/media/hdb1/Programs/Emacs/site-lisp/goodies/Syntax/")
  '(appt-display-diary nil)
  '(appt-display-duration 5)
  '(appt-message-warning-time 0)
@@ -117,12 +116,20 @@
  '(delimit-columns-str-after " ]")
  '(delimit-columns-str-before "[ ")
  '(delimit-columns-str-separator ", ")
+ '(desktop-globals-to-save (quote (sql-mysql-schema bibus-formats desktop-missing-file-warning tags-file-name search-ring regexp-search-ring register-alist windata-named-winconf)))
  '(diff-switches "-ubB")
  '(dired-listing-switches "-alvh")
- '(double-map (quote ((59 ";" "æ") (39 "'" "ø") (91 "[" "å") (58 ":" "Æ") (34 "\"" "Ø") (123 "{" "Å") (99 "c" "©"))))
+ '(doxymacs-browse-url-function (quote w3m-goto-url))
+ '(doxymacs-use-external-xml-parser t)
  '(ecb-options-version "2.32")
  '(ediff-split-window-function (quote split-window-horizontally))
  '(ediff-window-setup-function (quote ediff-setup-windows-plain))
+ '(erc-autojoin-channels-alist (quote (("oftc.net" "#emacs-cn") ("llarian.net" "#dbix-class" "#tt" "#catalyst") ("co.uk" "#dbix-class" "#tt" "#catalyst") ("freenode.net" "#perl6" "#perl" "#ubuntu-cn" "#emacs"))))
+ '(erc-fill-column 69)
+ '(erc-modules (quote (autojoin button completion fill irccontrols list log match menu move-to-prompt netsplit networks noncommands readonly ring stamp spelling track)))
+ '(erc-nick "yewenbin")
+ '(erc-server-auto-reconnect nil)
+ '(erc-track-exclude-types (quote ("JOIN" "KICK" "NICK" "PART" "QUIT" "MODE" "333" "353")))
  '(flymake-gui-warnings-enabled nil)
  '(folding-folding-on-startup nil)
  '(fringe-mode (quote (8 . 0)) nil (fringe))
@@ -130,11 +137,13 @@
  '(gblogger-user-email "wenbinye@gmail.com")
  '(generic-extras-enable-list (quote (alias-generic-mode apache-conf-generic-mode apache-log-generic-mode bat-generic-mode etc-fstab-generic-mode etc-modules-conf-generic-mode etc-passwd-generic-mode etc-services-generic-mode fvwm-generic-mode hosts-generic-mode inetd-conf-generic-mode java-manifest-generic-mode java-properties-generic-mode javascript-generic-mode mailagent-rules-generic-mode mailrc-generic-mode named-boot-generic-mode named-database-generic-mode prototype-generic-mode resolve-conf-generic-mode samba-generic-mode show-tabs-generic-mode vrml-generic-mode x-resource-generic-mode)))
  '(grep-command "grep -nHi \"\"")
- '(help-dwim-active-types (quote (elisp-function elisp-variable woman clibpc perldoc perlapi)))
+ '(help-dwim-active-types (quote (phpdoc elisp-function elisp-variable woman clibpc perldoc)))
  '(hi-lock-file-patterns-policy (lambda (p) t))
+ '(htmlize-convert-nonascii-to-entities nil)
  '(ibuffer-formats (quote ((mark modified read-only " " (name 30 30 :left :elide) " " (size 9 -1 :right) " " (mode 16 16 :right :elide) " " filename-and-process) (mark " " (name 16 -1) " " filename))))
  '(ido-enable-regexp t)
- '(inferior-ess-program "C:\\Program Files\\R\\R-2.2.1\\bin\\Rterm.exe" t)
+ '(ido-everywhere t)
+ '(inferior-lisp-program "clisp")
  '(ispell-extra-args (quote ("--lang=en")))
  '(ispell-program-name "aspell")
  '(locate-command "slocate")
@@ -156,21 +165,7 @@
  '(muse-publish-desc-transforms (quote (muse-wiki-publish-pretty-title muse-wiki-publish-pretty-interwiki muse-publish-escape-specials-in-string)))
  '(muse-wiki-publish-small-title-words (quote ("the" "and" "at" "on" "of" "for" "in" "an" "a" "page" "anime")))
  '(muse-xhtml-style-sheet "<style type=\"text/css\">
-body {
-  background: #fffff0; color: black;
-  margin-left: 20%; margin-right: 20%;
-}
-
-p { margin-top: 1% }
-p.verse { margin-left: 3% }
-
-.example { margin-left: 3% }
-
-h2 {
-  margin-top: 25px;
-  margin-bottom: 0px;
-}
-h3 { margin-bottom: 0px; }
+@import url(\"style.css\");
     </style>")
  '(org-agenda-files (quote ("d:/Docs/My Dropbox/Public/works/gtd.org")))
  '(org-emphasis-alist (quote (("*" bold "<b>" "</b>") ("/" italic "<i>" "</i>") ("_" underline "<u>" "</u>") ("=" shadow "<code>" "</code>"))))
@@ -203,12 +198,19 @@ h3 { margin-bottom: 0px; }
  '(perlapi-src-directory "d:/Sources/perl-5.8.8/" t)
  '(perldb-window-configuration (quote ((without-io (horizontal 0.5069 (vertical 0.4782 gud-comint-buffer perldb-stack-buffer) source-buffer) 1) (with-io (vertical 0.25 (horizontal 0.5 gud-comint-buffer perldb-locals-buffer) (vertical 0.5 (horizontal 0.5 source-buffer perldb-inferior-io) (horizontal 0.5 perldb-stack-buffer perldb-breakpoints-buffer))) 0 0))) t)
  '(pgg-default-user-id "Ye Wenbin")
+ '(quickurl-format-function (lambda (url) (format "%s" (quickurl-url-url url))))
+ '(quickurl-url-file "~/.emacs.d/.quickurls")
  '(safe-local-variable-values (quote ((view-mode . t) (byte-compile-warnings redefine callargs free-vars unresolved obsolete noruntime) (sgml-omittag) (sgml-shorttag . t) (sgml-general-insert-case . lower) (c-font-lock-extra-types "FILE" "bool" "language" "linebuffer" "fdesc" "node" "regexp") (outline-minor-mode . t) (c-indentation-style . bsd) (perl-indent-level . 4) (perl-continued-statement-offset . 4) (perl-continued-brace-offset . 0) (perl-brace-offset . -4) (perl-brace-imaginary-offset . 0) (perl-label-offset . -4) (cperl-continued-statement-offset . 2) (encoding . utf-8) (byte-compile-warnings free-vars unresolved callargs redefine) (add-log-time-zone-rule . t) (adaptive-fill-mode . t) (time-stamp-start . "def\\\\texinfoversion{") (time-stamp-format . "%:y-%02m-%02d.%02H") (time-stamp-end . "}") (outline-minor-mode) (life-universe-everything . 42) (symbolic-formulas ("Eastern area") ("West-district") ("North&South") ("Other")) (code . chinese-gbk-unix) (TeX-master . t) (todo-categories "life" "Todo" "Todo") (allout-layout 1 -1 1 1 1 -1 :) (folded-file . t) (folding-internal-margins) (cperl-indent-level . 4))))
+ '(set-mark-command-repeat-pop t)
  '(sql-database "mysql")
- '(sql-mysql-program "dbsh.bat")
+ '(sql-indent-offset 4)
+ '(sql-mysql-program "mysql")
+ '(sql-postgres-program "/usr/bin/psql")
+ '(sql-sqlite-program "sqlite3")
  '(sql-user "root")
  '(template-date-format "<%Y-%m-%d %H:%M:%S>")
- '(tex-dvi-view-command "start yap")
+ '(tooltip-frame-parameters (quote ((font . "-bitstream-bitstream vera sans mono-regular-roman-normal--12-*-*-*-*-*-fontset-startup") (name . "tooltip") (internal-border-width . 2) (border-width . 1))))
+ '(tooltip-use-echo-area nil)
  '(view-read-only t)
  '(w3m-content-type-alist (quote (("text/plain" "\\.\\(?:txt\\|tex\\|el\\)\\'" nil nil) ("text/html" "\\.s?html?\\'" browse-url-generic nil) ("text/sgml" "\\.sgml?\\'" nil "text/plain") ("text/xml" "\\.xml\\'" nil "text/plain") ("image/jpeg" "\\.jpe?g\\'" ("/usr/bin/display" file) nil) ("image/png" "\\.png\\'" ("/usr/bin/display" file) nil) ("image/gif" "\\.gif\\'" ("/usr/bin/display" file) nil) ("image/tiff" "\\.tif?f\\'" ("/usr/bin/display" file) nil) ("image/x-xwd" "\\.xwd\\'" ("/usr/bin/display" file) nil) ("image/x-xbm" "\\.xbm\\'" ("/usr/bin/display" file) nil) ("image/x-xpm" "\\.xpm\\'" ("/usr/bin/display" file) nil) ("image/x-bmp" "\\.bmp\\'" ("/usr/bin/display" file) nil) ("video/mpeg" "\\.mpe?g\\'" nil nil) ("video/quicktime" "\\.mov\\'" nil nil) ("application/postscript" "\\.e?ps\\'" ("gv" file) nil) ("application/pdf" "\\.pdf\\'" ("xpdf" file) nil) ("application/xml" "\\.xml\\'" nil "text/plain") ("application/rdf+xml" "\\.rdf\\'" nil "text/plain") ("application/rss+xml" "\\.rss\\'" nil "text/plain") ("application/xhtml+xml" nil nil "text/html"))))
  '(woman-cache-filename "~/.wmncach.el")

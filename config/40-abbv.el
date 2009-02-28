@@ -83,6 +83,30 @@
                          'tempo-php-tags)
   )
 
+;;{{{  html
+(defvar tempo-html-tags nil)
+(tempo-define-template
+ "doctype"
+ '((pi ("doctype: " ("strict" "transitional" "frameset")) "transitional"  type t)
+   (assoc-default (tempo-lookup-named 'type)
+                  '(("strict" .
+                     "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">")
+                    ("transitional" .
+                     "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">")
+                    ("frameset" .
+                     "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">"))))
+ "doctypex"
+ "expand doctype"
+ 'tempo-html-tags)
+(tempo-define-template
+ "charset"
+ '("<meta http-equiv=\"Content-Type\" content=\"text/html; charset="
+   (pi ("charset: " ("utf-8" "gb2312")) "utf-8") "\" />")
+ "charsetx"
+ "expand charset"
+ 'tempo-html-tags)
+;;}}}
+
 ;;{{{  c-mode
 (deh-section "abbv-c-mode"
   (defvar tempo-c-tags nil

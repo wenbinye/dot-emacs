@@ -111,6 +111,7 @@ With argument, position cursor at end of buffer."
   (set 'html-mode-hook
        (lambda ()
          (define-key html-mode-map (kbd "<C-return>") 'ywb-html-insert-newline)
+         (tempo-use-tag-list 'tempo-html-tags)
          (let ((str '(""))
                (align '(("align" ("left") ("center") ("right")))))
            (setq sgml-tag-alist `(("style"
@@ -121,7 +122,7 @@ With argument, position cursor at end of buffer."
                                    ("http-equiv" ("Content-Type"))
                                    ("content" ("text/html; charset=utf-8" "text/plain") ("Copyright &#169;"))
                                    ("name" ,str))
-                                  ("script"
+                                  ("script" (nil "//<![CDATA[" \n _ \n "//]]>")
                                    ("src" ,str)
                                    ("type" "text/javascript"))
                                   ("div" n
@@ -222,6 +223,9 @@ With argument, position cursor at end of buffer."
               dir (file-name-directory dir)))
       (and (string= file "locale")
            (setq po-search-path (cons (list dir) po-search-path)))))
+  (setq po-subedit-mode-hook
+      (lambda ()
+        (set-input-method "eim-wb")))
   (add-hook 'po-mode-hook 'ywb-po-mode-hook))
 
 (deh-section "sml-mode"
@@ -238,31 +242,25 @@ With argument, position cursor at end of buffer."
             (lambda ()
               (keep-end-watch-this (current-buffer)))))
 
+(deh-section "bison"
+  (autoload 'bison-mode "bison-mode")
+  (add-to-list 'auto-mode-alist '("\\.y$" . bison-mode))
+  (autoload 'flex-mode "flex-mode")
+  (add-to-list 'auto-mode-alist '("\\.l$" . flex-mode)))
+
 (deh-section "texinfo"
   (add-hook 'texinfo-mode-hook
             (lambda ()
               (local-set-key "\C-c\C-i" 'texinfo-insert-block))))
-
-(deh-section "emboss"
-  (add-to-list 'auto-mode-alist '("\\.acd$" . acd-mode))
-  (autoload 'acd-mode "acd" "Major mode for emboss acd files" t)
-
-  (setq emboss-src-diretory "/home/ywb/downloads/emboss/emboss/")
-  (add-hook 'c-mode-hook 'emboss-c-mode-hook)
-  (setq tempo-interactive t)
-  (autoload 'emboss-c-mode-hook "emboss")
-  (autoload 'emboss-describe-symbol "emboss"
-    "Describe emboss data structure or functions." t)
-  (eval-after-load "emboss"
-    '(help-dwim-register
-      `(emboss . [,emboss-symbol-chars emboss-obarray nil emboss-describe-symbol])
-      t)))
 
 (deh-section "vb"
   (setq visual-basic-mode-indent 4)
   )
 
 (deh-section "autoloads"
+  (autoload 'svn-status "psvn" nil t)
+  (autoload 'js2-mode "js2-mode" "" t)
+  (autoload 'git-status "git" "" t)
   (autoload 'asy-mode "asy-mode.el" "Asymptote major mode." t)
   (autoload 'yaml-mode "yaml-mode" "YAML major mode" t)
   (autoload 'lasy-mode "asy-mode.el" "hybrid Asymptote/Latex major mode." t)
@@ -278,17 +276,20 @@ With argument, position cursor at end of buffer."
   (autoload 'xs-mode "xs-mode" "Major mode for XS files" t)
   (autoload 'acd-mode "acd" "Major mode to edit acd files" t)
   (autoload 'sourcepair-load "sourcepair" nil t)
-(autoload 'js2-mode "js2" nil t)
+  (autoload 'js2-mode "js2" nil t)
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
-  (add-to-list 'auto-mode-alist '("\\.prc$" . sql-mode))
+  (add-to-list 'auto-mode-alist '("\\.proc?$" . sql-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\(ya?ml\\|fb\\)$" . yaml-mode))
+  (add-to-list 'auto-mode-alist '("\\.tt2?$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.acd$" . acd-mode))
   (add-to-list 'auto-mode-alist '("\\.po\\'\\|\\.po\\." . po-mode))
   (add-to-list 'auto-mode-alist '("\\.i\\'" . swig-mode))
   (add-to-list 'auto-mode-alist '("\\.asy$" . asy-mode))
   (add-to-list 'auto-mode-alist '("\\.cls$" . LaTeX-mode))
   (add-to-list 'auto-mode-alist '("\\.css$" . css-mode))
+  (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(php[345]?\\|module\\|phtml\\|inc\\)$" . php-mode))
   (add-to-list 'auto-mode-alist '("\\.gp$" . gnuplot-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(hla\\|hhf\\)$" . hla-mode))
@@ -304,22 +305,21 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.pir$" . pir-mode))
   (add-to-list 'auto-mode-alist '("\\.xs$" . xs-mode))
   (add-to-list 'auto-mode-alist '("\\.muse$" . muse-mode))
-(add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
-(add-to-list 'auto-mode-alist '("\\.twiki$" . oddmuse-mode)))
+  (add-to-list 'auto-mode-alist '("\\.twiki$" . oddmuse-mode)))
 
 (deh-section "php"
   (setq php-imenu-generic-expression
         '(
           ("Private Methods"
-           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?private\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
+           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?private\\s-+\\(?:static\\s-+\\)?function\\s-+\\(&?\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
           ("Protected Methods"
-           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?protected\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
+           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?protected\\s-+\\(?:static\\s-+\\)?function\\s-+\\(&?\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
           ("Public Methods"
-           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?public\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
+           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?public\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(&??:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
           ("Classes"
            "^\\s-*class\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*" 1)
           (nil
-           "^\\s-*\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
+           "^\\s-*\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*function\\s-+\\(&?\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
           ))
   (defun my-php-mode-hook ()
     (tempo-use-tag-list 'tempo-php-tags)
@@ -335,3 +335,4 @@ With argument, position cursor at end of buffer."
     (local-set-key (kbd "C-c s") 'compile-dwim-compile)
     )
   (add-hook 'php-mode-hook 'my-php-mode-hook))
+

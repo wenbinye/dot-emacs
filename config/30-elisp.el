@@ -9,7 +9,7 @@
               (lambda ()
                 (dired-omit-mode t)))
     (setq dired-omit-extensions
-          '(".o" "~" ".bak" ".obj" ".ico" ".pif" ".lnk" ".a"
+          '(".o" "~" ".bak" ".obj" ".lnk" ".a"
             ".ln" ".blg" ".bbl" ".drv" ".vxd" ".386" ".elc" ".lof"
             ".glo" ".lot" ".fmt" ".tfm" ".class" ".lib" ".mem" ".x86f"
             ".sparcf" ".fasl" ".ufsl" ".fsl" ".dxl" ".pfsl" ".dfsl"
@@ -26,33 +26,36 @@
   (setq dired-dwim-target t)
 
   (deh-section "dired-assoc"
-    (dolist (file '(("acroread" "\\.pdf$")
-                    ("xpdf" "\\.pdf$")
-                    ("xdvi" "\\.dvi$")
-                    ("dvipdf" "\\.dvi$")
-                    ("zxpdf" "\\.pdf.gz$")
-                    ("ps2pdf" "\\.ps$" "\\.eps$")
-                    ("gv" "\\.ps$" "\\.eps$")
-                    ("unrar x" "\\.rar$")
-                    ("kchmviewer" "\\.chm$")
-                    ("mplayer -stop-xscreensaver" "\\.avi$" "\\.mpg" "\\.rmvb" "\\.rm$" "\\.flv$" "\\.wmv")
-                    ("mplayer -playlist" "\\.list$")
-                    ("gqview" "\\.gif$" "\\.jpe?g$" "\\.tif$" "\\.png$")
-                    ("gthumb" "\\.gif$" "\\.jpe?g$" "\\.tif$" "\\.png$")
-                    ("docview.pl" "\\.doc$")
-                    ("ooffice -writer" "\\.ods$" "\\.doc$")
-                    ("ooffice -calc"  "\\.xls$")
-                    ("ooffice -impress" "\\.odt$" "\\.ppt$")
-                    ("gnumeric" "\\.xls$")
-                    ("7z x" "\\.7z$")
-                    ("djview" "\\.djvu")
-                    ("perl" "\\.pl$")
-                    ("opera -newpage" "\\.xml$" "\\.html$" "\\.htm$" "\\.mht$")))
-      (dolist (suf (cdr file))
-        (let ((prg (assoc suf dired-guess-shell-alist-default)))
-          (if prg
-              (setcdr prg (delete-dups (cons (car file) (cdr prg))))
-            (add-to-list 'dired-guess-shell-alist-default (list suf (car file))))))))
+    (dolist (file `(("acroread" "pdf")
+                    ("xpdf" "pdf")
+                    ("xdvi" "dvi")
+                    ("dvipdf" "dvi")
+                    ("zxpdf" "pdf.gz")
+                    ("ps2pdf" "ps" "eps")
+                    ("gv" "ps" "eps")
+                    ("unrar x" "rar")
+                    ("kchmviewer" "chm")
+                    ("mplayer -stop-xscreensaver" "avi" "mpg" "rmvb" "rm" "flv" "wmv" "mkv")
+                    ("mplayer -playlist" "list")
+                    ("display" "gif" "jpeg" "jpg" "tif" "png" )
+                    ("gthumb" "gif" "jpeg" "jpg" "tif" "png")
+                    ("docview.pl" "doc")
+                    ("ooffice -writer" "ods" "doc")
+                    ("ooffice -calc"  "xls")
+                    ("ooffice -impress" "odt" "ppt")
+                    ("gnumeric" "xls")
+                    ("7z x" "7z")
+                    ("djview" "djvu")
+                    ("perl" "pl")
+                    ("myopera" "xml" "html" "htm" "mht")))
+      (add-to-list 'dired-guess-shell-alist-default
+                   (list (concat "\\." (regexp-opt (cdr file) t) "$")
+                         (car file)))))
+      ;; (dolist (suf (cdr file))
+      ;;   (let ((prg (assoc suf dired-guess-shell-alist-default)))
+      ;;     (if prg
+      ;;         (setcdr prg (delete-dups (cons (car file) (cdr prg))))
+      ;;       (add-to-list 'dired-guess-shell-alist-default (list suf (car file))))))))
   ;; sort:directories first (emacswiki 上某君之作)
   (defun his-dired-sort ()
     "Dired sort hook to list directories first."
@@ -96,7 +99,6 @@
 (deh-require 'ido
   (ido-mode 1)
   (setq ido-save-directory-list-file "~/.emacs.d/_ido_last")
-  (setq read-file-name-function 'ido-read-file-name)
   ;; visit with dired also push the diretory to `ido-work-directory-list'
   (defadvice ido-file-internal (after ido-dired-add-work-directory)
     (when (eq ido-exit 'dired)
@@ -154,21 +156,23 @@
   (define-key ibuffer-mode-map (kbd "C-x C-f") 'ywb-ibuffer-find-file)
   (define-key ibuffer-mode-map " " 'scroll-up)
   ;; group buffers
-  (setq ibuffer-mode-hook
-        (lambda ()
-          (setq ibuffer-filter-groups
-                '(
-                  ("*buffer*" (name . "\\*.*\\*"))
-                  ("dired" (mode . dired-mode))
-                  ("perl" (or (mode . cperl-mode)
-                              (mode . sepia-mode)
-                              (mode . perl-mode)))
-                  ("elisp" (or (mode . emacs-lisp-mode)
-                               (mode . lisp-interaction-mode)))
-                  ("prog" (or (mode . c++-mode)
-                              (mode . c-mode)
-                              (mode . java-mode)))
-                  ("tags" (name . "^TAGS"))))))
+  (setq ibuffer-saved-filter-groups
+        '(("default"
+           ("*buffer*" (name . "\\*.*\\*"))
+           ("dired" (mode . dired-mode))
+           ("perl" (or (mode . cperl-mode)
+                       (mode . sepia-mode)
+                       (mode . perl-mode)))
+           ("elisp" (or (mode . emacs-lisp-mode)
+                        (mode . lisp-interaction-mode)))
+           ("prog" (or (mode . c++-mode)
+                       (mode . c-mode)
+                       (mode . java-mode)))
+           ("tags" (name . "^TAGS"))
+           ("erc" (mode . erc-mode)))))
+  (set 'ibuffer-mode-hook
+       (lambda ()
+         (ibuffer-switch-to-saved-filter-groups "default")))
   (setq ibuffer-saved-filters
         '(("t" ((or (mode . latex-mode)
                     (mode . plain-tex-mode))))
@@ -223,6 +227,17 @@
   (add-hook 'shell-mode-hook 'ywb-shell-mode-hook))
 ;;}}}
 
+(deh-section "erc"
+  (setq erc-log-channels-directory "~/.emacs.d/erc/")
+  (eval-after-load "erc"
+    '(deh-require 'emoticons
+       (add-hook 'erc-insert-modify-hook 'emoticons-fill-buffer)
+       (add-hook 'erc-send-modify-hook 'emoticons-fill-buffer)
+       (add-hook 'erc-mode-hook
+                 (lambda ()
+                   (eldoc-mode t)
+                   (setq eldoc-documentation-function 'emoticons-help-echo))))))
+
 ;;{{{  session, org, ido, ibuffer and so on
 ;; session
 (deh-require 'session
@@ -235,12 +250,21 @@
   (setq org-CUA-compatible t)
   (add-hook 'org-load-hook
             (lambda ()
-              (dolist (key '(S-right S-left S-up S-down))
-                (delq (assq key org-mode-map) org-mode-map))
-              (let ((map (assq 3 org-mode-map)))
-                (delq (assq ?\$ map) map))
-              (define-key org-mode-map (kbd "C-c ^") 'ywb-org-table-sort-lines)))
+              ;; (let (org-CUA-compatible)
+              ;;   (define-key org-mode-map (org-key 'S-return)   nil)
+              ;;   (define-key org-mode-map (org-key 'S-up)       nil)
+              ;;   (define-key org-mode-map (org-key 'S-down)     nil)
+              ;;   (define-key org-mode-map (org-key 'S-left)     nil)
+              ;;   (define-key org-mode-map (org-key 'S-right)    nil))
+              (add-to-list 'org-link-frame-setup '(file . my-find-file-function))
+              (define-key org-mode-map (kbd "C-c ^") 'ywb-org-table-sort-lines)
+              (define-key org-mode-map (kbd "C-c $") nil)))
   (setq org-export-with-sub-superscripts nil)
+  (defun my-find-file-function (file)
+    "find file according to the file extension."
+    (funcall (or (assoc-default file ywb-dired-guess-command-alist
+                                'string-match)
+                 'find-file) file))
   (setq org-file-apps-defaults-gnu '((t . emacs))))
 
 (deh-section "std-lib"
@@ -334,7 +358,8 @@
             (lambda ()
               (define-key Info-mode-map "j" 'next-line)
               (define-key Info-mode-map "k" 'previous-line)))
-  (filesets-init)
+  ;; (filesets-init)
+  (defalias 'default-generic-mode 'conf-mode)
   (require 'ffap)
   (deh-section "hippie-expand"
     (setq hippie-expand-try-functions-list
@@ -351,6 +376,37 @@
             try-complete-lisp-symbol
             try-complete-lisp-symbol-partially
             try-expand-whole-kill)))
+  (deh-section "doc-view"
+    (add-hook 'doc-view-mode-hook
+              (lambda ()
+                (define-key doc-view-mode-map [remap move-beginning-of-line] 'image-bol)
+                (define-key doc-view-mode-map [remap move-end-of-line] 'image-eol))))
+  (deh-section "image"
+    (defun image-display-info ()
+      (interactive)
+      (let ((image (image-get-display-property))
+            info)
+        (setq info
+              (list
+               (cons "File Size"
+                     (let ((size (length (plist-get (cdr image) :data))))
+                       (if (> size (* 10 1024))
+                           (format "%.2f kb" (/ size 1024))
+                         size)))
+               (cons "Image Type" (plist-get (cdr image) :type))
+               (cons "Image Size"
+                     (let ((size (image-size image t)))
+                       (format "%d x %d pixels" (car size) (cdr size))))))
+        (with-current-buffer (get-buffer-create "*image-info*")
+          (erase-buffer)
+          (dolist (item info)
+            (insert (format "%12s: %s\n"
+                            (propertize (car item) 'face 'bold)
+                            (cdr item))))
+          (display-buffer (current-buffer)))))
+    (add-hook 'image-mode-hook
+              (lambda ()
+                (define-key image-mode-map "I" 'image-display-info))))
   )
 ;;}}}
 
@@ -386,6 +442,15 @@
                                       "\\s-*>.\\{,25\\}\\(?:index\\|目录\\)")
                              )))))
 ;;}}}
+
+(deh-require 'bm
+  (defadvice bm-next (before ywb-bm-next-push-mark ())
+    (ring-insert find-tag-marker-ring (point-marker)))
+  (defadvice bm-previous (before ywb-bm-previous-push-mark ())
+    (ring-insert find-tag-marker-ring (point-marker)))
+  (ad-activate 'bm-next)
+  (ad-activate 'bm-previous)
+  )
 
 ;;{{{ template, browse-kill-ring, wb-line, htmlize, moccur, recent-jump,  and so on
 (deh-section "non-std-lib"
@@ -482,6 +547,7 @@
   (autoload 'po-mode "po-mode"
     "Major mode for translators to edit PO files" t)
 
+  (autoload 'yaml-mode "yaml-mode" "Simple mode to edit YAML." t)
   (autoload 'muse-insert-list-item "muse-mode" t)
   (deh-section "oddmuse"
     (autoload 'oddmuse-mode "oddmuse" "" t)
@@ -538,9 +604,20 @@
   (deh-section "eim"
     ;; eim
     (autoload 'eim-use-package "eim" "Another emacs input method")
+    (defun my-eim-wb-activate-function ()
+      (if (and (boundp 'eim-wb-punctuation-list)
+               (not (local-variable-p 'eim-wb-punctuation-list)))
+          (if (eq major-mode 'latex-mode)
+              (set (make-local-variable 'eim-wb-punctuation-list)
+                   (let (alist)
+                     (dolist (p (default-value 'eim-wb-punctuation-list))
+                       (unless (member (car p) '("$" "%" "(" ")" "'" "\"" "`" "{" "}" "[" "]" "#" "&"))
+                         (push p alist)))
+                     alist)))))
     (register-input-method
      "eim-wb" "euc-cn" 'eim-use-package
-     "五笔" "汉字五笔输入法" "wb.txt")
+     "五笔" "汉字五笔输入法" "wb.txt"
+     'my-eim-wb-activate-function)
     (setq default-input-method "eim-wb")
     (register-input-method
      "eim-py" "euc-cn" 'eim-use-package
@@ -551,10 +628,10 @@
       (global-set-key ";" 'eim-insert-ascii)))
 
   (autoload 'hexl-mode "hexl+" "Edit a file in a hex dump format" t)
-  ;; (deh-section "mule-menu"
-  ;;   (require 'english-menu nil t)
-  ;;   (require 'chinese-menu nil t)
-  ;;   (require 'mule-menu nil t))
+  (deh-section "mule-menu"
+    (require 'english-menu nil t)
+    (require 'chinese-menu nil t)
+    (require 'mule-menu nil t))
   (deh-section "dot-emacs-helper"
     (setq deh-custom-file "~/.emacs.d/config/110-deh.el"))
   )
@@ -565,6 +642,7 @@
 (defun muse-mode ()
   (require 'muse-init)
   (muse-mode-choose-mode))
+(autoload 'muse-tree "muse-init" "" t)
 
 (defun emms ()
   (interactive)

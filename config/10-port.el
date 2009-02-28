@@ -2,6 +2,12 @@
 ;; This config is for portable. The platform relate configuration
 ;; should appear here.
 
+(deh-section "env"
+  (setenv "GIT_PAGER" "cat")
+  (setenv "PAGER" "cat")
+  (setenv "EDITOR" "/home/ywb/local/bin/emacsclient")
+  )
+
 (deh-section "coding-system"
   (unless (coding-system-p 'gbk)
     (define-coding-system-alias 'gbk 'chinese-iso-8bit))
@@ -16,14 +22,7 @@
 】；：？！±×÷∶°′″℃／＼＂＿￣｜ㄥ"  nil))
     (modify-syntax-entry char "." (standard-syntax-table))))
 
-(deh-section "load-path"
-  ;; add directory in ywb-load-path to load-path recursively
-  (defvar ywb-load-path (expand-file-name "~/.emacs.d/site-lisp/"))
-  (add-to-list 'load-path ywb-load-path)
-  (let ((default-directory ywb-load-path))
-    (load "subdirs.el"))
-  (add-to-list 'load-path (expand-file-name "~/.emacs.d/config/"))
-
+(deh-section "PATH"
   ;; add more directory to environment variable PATH
   (let ((path (split-string (getenv "PATH") path-separator)))
     (mapcar (lambda (p)
@@ -31,12 +30,11 @@
                        (expand-file-name p)))
               (add-to-list 'exec-path p)
               (add-to-list 'path p))
-            '("~/bin" "~/proj/perl/bin/" "~/local/bin"
-              "d:/programs/emacs/bin"
-              ))
-    (setenv "PATH" (mapconcat 'identity path path-separator)))
-  (when (eq system-type 'windows-nt)
-    (add-to-list 'load-path "f:/ywb/.emacs.d/elpa/")))
+            (append
+             '("~/bin" "~/proj/perl/bin/" "~/local/bin")
+             (when (eq system-type 'windows-nt)
+               '("d:/programs/emacs/bin"))))
+    (setenv "PATH" (mapconcat 'identity path path-separator))))
 
 (deh-section "win32"
   (when (eq system-type 'windows-nt)
@@ -72,6 +70,7 @@
           mysql-password ""
           mysql-options nil
           mysql-program "dbsh")
+    (setq inferior-ess-program "C:\\Program Files\\R\\R-2.2.1\\bin\\Rterm.exe" t)
     (setq gtk-perl-doc-file "f:/ywb/.emacs.d/site-lisp/mycontrib/gtk-doc.txt")
     (defun ywb-vcvars32 ()
       (interactive)
@@ -82,8 +81,6 @@
 
 (deh-section "linux"
   (when (eq system-type 'gnu/linux)
-    (setq mysql-user "root"
-          mysql-password "pe")
     (make-variable-buffer-local 'compile-command)
     (defvar ywb-emacs-lisp-path
       (expand-file-name (concat data-directory "../site-lisp/")))
@@ -109,7 +106,7 @@
           browse-url-generic-args '("-newpage")
           browse-url-browser-function 'browse-url-generic)
     (if (= emacs-major-version 23)
-        (setq find-function-C-source-directory "/home/ywb/downloads/cvs.savannah.gnu.org/emacs-unicode/src")
+        (setq find-function-C-source-directory "/home/ywb/downloads/cvs.savannah.gnu.org/emacs/src")
       (setq find-function-C-source-directory "/home/ywb/downloads/cvs.savannah.gnu.org/emacs-22/src"))
 
     (deh-section "font-config-emacs22"
@@ -119,26 +116,6 @@
         ;; Setup X Selection for mule-gbk
         (mule-gbk-selection-setup)
         (prefer-coding-system 'utf-8)
-        ;; (require 'mule-gbk nil t)
-        ;; (when (featurep 'mule-gbk)
-        ;;   (setq utf-translate-cjk-charsets
-        ;;         '(chinese-gb2312
-        ;;           chinese-big5-1 chinese-big5-2
-        ;;           chinese-cns11643-5
-        ;;           chinese-cns11643-6
-        ;;           chinese-cns11643-7
-        ;;           japanese-jisx0208 japanese-jisx0212
-        ;;           katakana-jisx0201
-        ;;           korean-ksc5601))
-        ;;   (load "utf-8")
-        ;;   (require 'mule-gbk-setup)
-        ;;   (when (featurep 'mule-gbk-setup)
-        ;;     (setq current-language-environment "Chinese-GBK")
-        ;;     (utf-translate-cjk-mode 1)
-        ;;     (mule-gbk-selection-setup)
-        ;;     (set-language-environment 'chinese-gbk)
-        ;;     (prefer-coding-system 'utf-8)
-        ;;     (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING)))
         (create-fontset-from-fontset-spec
          "-*-courier-medium-r-normal-*-12-*-*-*-*-*-fontset-courier")
         (setq ywb-chinese-font
@@ -168,44 +145,7 @@
 
 (deh-section "emacs23"
   (when (= emacs-major-version 23)
-    ;; (let ((l '(chinese-gb2312
-    ;;            gb18030-2-byte
-    ;;            gb18030-4-byte-bmp
-    ;;            gb18030-4-byte-ext-1
-    ;;            gb18030-4-byte-ext-2
-    ;;            gb18030-4-byte-smp)))
-    ;;   (dolist (elt l)
-    ;;     (map-charset-chars #'modify-category-entry elt ?|)
-    ;;     (map-charset-chars
-    ;;      (lambda (range ignore)
-    ;;        (set-char-table-range char-width-table range 2))
-    ;;      elt)))
-    ;; (setq encrypt-map-file "ywbn")
-    ;; (require 'encrypt nil t)
     (require 'fenc nil t)
-    (setq mule-menu-coding-system 'utf-8)
-    ;; (when (coding-system-p 'gbk)
-    ;;   (setq fenc-coding-list '([gbk fenc-cp936-top-chars 0]
-    ;;                            [cp950 fenc-cp950-top-chars 0]
-    ;;                            [cp932 fenc-cp932-top-chars 0])))
-    (if (eq window-system 'x)
-        (let (fs)
-          (set-default-font "Bitstream Vera Sans Mono-10")
-          (setq fs (frame-parameter nil 'font))
-          ;; (set-fontset-font fs 'symbol '("Simsun" . "unicode-bmp") nil 'append)
-          ;; (set-fontset-font fs 'symbol '("Microsoft Yahei" . "unicode-bmp") nil 'append)
-          (dolist (spec '(symbol cjk-misc bopomofo))
-            (set-fontset-font fs spec '("WenQuanYi Bitmap Song" . "unicode-bmp"))))
-      (let ((cfont (format
-                    "-outline-%s-*-r-*-*-%d-*-96-96-c-*-iso10646-1"
-                    "新宋体" 14))
-            (efont (format
-                    "-outline-%s-*-r-*-*-%d-97-96-96-c-*-iso8859-1"
-                    "bitstream vera sans mono" 12))
-            (fs (frame-parameter nil 'font)))
-        (dolist (spec '(nil kana han cjk-misc symbol))
-          (set-fontset-font fs spec cfont nil 'prepend))
-        ;; (dolist (spec '(ascii latin))
-        ;;   (set-fontset-font fs 'ascii efont nil 'prepend))
-        )
-      )))
+    (when (eq window-system 'x)
+      (load "my-fontset.el"))
+    ))

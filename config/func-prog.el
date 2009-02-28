@@ -83,7 +83,7 @@ With prefix argument, if not found create the file."
 
 "
      (format-spec-make
-      ?i (bibus-ref-field ref "Identifier")
+      ?i (replace-regexp-in-string "#" ":" (bibus-ref-field ref "Identifier"))
       ?a (replace-regexp-in-string ";" ". and " (bibus-ref-field ref "Author"))
       ?t (bibus-ref-field ref "Title")
       ?j (bibus-ref-field ref "Journal")
@@ -117,3 +117,26 @@ With prefix argument, if not found create the file."
   (let ((file (make-temp-file "region-" nil ".html")))
     (write-region beg end file)
     (browse-url file)))
+
+(defun ywb-show-format-time-string (locale)
+  (interactive
+   (list (completing-read "With locale(default current locale): "
+                          (split-string (shell-command-to-string "locale -a") "\n")nil t)))
+  (let ((system-time-locale
+         (if (= (length locale) 0) nil locale))
+        (time (current-time)))
+    (with-current-buffer (get-buffer-create "*format-time-string*")
+      (erase-buffer)
+      (insert "Current time: " (format-time-string "%c" time) "\n")
+      (dolist (c (nconc (number-sequence ?a ?z)
+                        (number-sequence ?A ?Z)))
+        (insert (format "%%%c - %s\n" c
+                        (format-time-string (format "%%%c" c) time))))
+      (display-buffer (current-buffer)))))
+
+(defun ywb-find-bin (file)
+  (interactive
+   (list
+    (completing-read "bin: " 'locate-file-completion
+                     (cons exec-path nil))))
+  (find-file (locate-file file exec-path)))

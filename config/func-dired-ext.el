@@ -1,7 +1,7 @@
 ;; w3m-visit
-(defun ywb-dired-w3m-visit ()
-  (interactive)
-  (w3m-goto-url (concat "file://" (dired-get-filename nil t))))
+(defun ywb-dired-w3m-visit (file)
+  (interactive (list (dired-get-filename nil t)))
+  (w3m-goto-url (concat "file://" file)))
 
 ;; kill-fullname
 (if (eq system-type 'windows-nt)
@@ -222,37 +222,54 @@
                       (with-temp-buffer
                         (insert-file-contents ywb-description-file)
                         ;; if the file has description, edit it and save
-                        (if (re-search-forward "<ul>" nil t)
+                        (if (re-search-forward "<table>" nil t)
                             (read-from-minibuffer
                              (format "Description for %s: " fn)
-                             (if (re-search-forward (concat "href=\"" (regexp-quote fn)
-                                                            "\">\\(.*\\)</a>") nil t)
+                             (if (re-search-forward (concat "href=\"" (regexp-quote fn) "\">"
+                                                            (regexp-quote fn) "</a></td><td>\\(.*\\)</td>") nil t)
                                  (match-string 1) ""))
                           (error "The %s is not a description file! Please rename it."
                                  ywb-description-file)))
                     ;; if file not exits create it 
                     (with-current-buffer (find-file-noselect ywb-description-file)
                       (insert
-                       "<html>\n\t<body>\n\t\t<ul>\n\t\t</ul>\n\t</body>\n</html>")
+                       "<html>
+<head>
+    <meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\" />
+</head>
+<body>
+  <table>
+  </table>
+</body>
+</html>
+")
                       (save-buffer)
                       (kill-buffer (current-buffer)))
                     (read-from-minibuffer
                      (format "Description for %s: " fn))))))
-  (let ((fn (dired-get-filename 'no-dir))
-        (buflist (buffer-list)))
+  (require 'format-spec)
+  (let* ((fn (dired-get-filename 'no-dir))
+        (buflist (buffer-list))
+        (format "\n<tr><td><a href=\"%f\">%f</a></td><td>%d</td></tr>")
+        (re (concat "href=\"" (regexp-quote fn)
+                    "\">" (regexp-quote fn) "</a></td><td>\\(.*\\)</td>"))
+        )
     (setq desc (replace-regexp-in-string "\n ?" " " desc))
     (with-current-buffer (find-file-noselect ywb-description-file)
       (save-excursion
         ;; if already has description, replace it
         (goto-char (point-min))
-        (re-search-forward "<ul>")
-        (if (re-search-forward (concat "href=\"" (regexp-quote fn)
-                                       "\">\\(.*\\)</a>") nil t)
+        (re-search-forward "<table>")
+        (if (re-search-forward re nil t)
             (replace-match desc nil nil nil 1)
-          (insert (format "\n<li><a href=\"%s\">%s</a></li>" fn desc)))
-        (save-buffer)
-        (unless (member (current-buffer) buflist)
-          (kill-buffer (current-buffer)))))))
+          (insert
+           (format-spec format
+                        (format-spec-make
+                         ?f fn
+                         ?d desc)))
+          (save-buffer)
+          (unless (member (current-buffer) buflist)
+            (kill-buffer (current-buffer))))))))
 ;; mark-bad-link
 (defun ywb-dired-mark-bad-link ()
   (interactive)
@@ -281,3 +298,70 @@ system when locale is utf-8 by M-x ywb-dired-convmv RET RET gbk RET."
                                                      from)
                                to))))
   (revert-buffer))
+
+(defun ywb-view-chm (file)
+  (interactive
+   (list (let ((file (dired-get-filename)))
+           (or file
+               (read-file-name "Open chm: ")))))
+  (if (and file (string-match "\\.chm$" file))
+      (let ((proc (get-process "archmage")))
+        (with-current-buffer (get-buffer-create " *archmage*")
+          (if (and proc (eq (process-status proc) 'run))
+              (kill-process proc))
+          (erase-buffer)
+          (setq proc (start-process "archmage" (current-buffer)
+                                    "archmage" "-p" "8888" file))
+          (sit-for 0.5)
+          (if (eq (process-status proc) 'run)
+              (w3m "http://localhost:8888")
+            (display-buffer (current-buffer)))))
+    (message "Not chm file!")))
+
+(defvar ywb-dired-guess-command-alist
+  '(("\\.html?$" . ywb-dired-w3m-visit)
+    ("\\.chm$" . ywb-view-chm))
+  "Default alist used for `ywb-dired-do-view'")
+
+(defun ywb-dired-do-view (command file)
+  "View file with elisp command"
+  (interactive
+   (let ((file (dired-get-filename))
+         def)
+     (if (not file)
+         (error "No file under point")
+       (setq def (or (assoc-default file ywb-dired-guess-command-alist
+                                    'string-match)
+                     'find-file))
+       (list (read-command (format "View with command(default %S): " def) def) file))))
+  (funcall command file))
+
+;;;###autoload
+(defun ywb-dired-ediff (file)
+  "Compare file at point with file FILE using `diff'.
+FILE defaults to the file at the mark.  (That's the mark set by
+\\[set-mark-command], not by Dired's \\[dired-mark] command.)
+The prompted-for file is the first file given to `diff'.
+With prefix arg, prompt for second argument SWITCHES,
+which is options for `diff'."
+  (interactive
+   (let ((current (dired-get-filename t))
+         (default (if (mark t)
+                      (save-excursion (goto-char (mark t))
+                                      (dired-get-filename t t)))))
+     (if (or (equal default current)
+             (and (not (equal (dired-dwim-target-directory)
+                              (dired-current-directory)))
+                  (not mark-active)))
+         (setq default nil))
+     (require 'ediff)
+     (list (read-file-name (format "Ediff %s with%s: "
+                                   current
+                                   (if default
+                                       (concat " (default " default ")")
+                                     ""))
+                           (if default
+                               (dired-current-directory)
+                             (dired-dwim-target-directory))
+                           default t))))
+  (ediff-files file (dired-get-filename t)))

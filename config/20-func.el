@@ -9,8 +9,7 @@
       (sort-subr reverse 'forward-line 'end-of-line nil nil
                  predicate))))
 
-(defun pp* (obj)
-  (pp obj) nil)
+(defalias 'pp* 'cl-prettyprint)
 
 (defsubst join (separator sequence)
   (mapconcat 'identity sequence separator))
@@ -30,7 +29,6 @@
   "like add-to-list"
   (set list (remove (assoc key (symbol-value list))
                     (symbol-value list))))
-
 
 ;;{{{ help functions
 ;; clone-buffer
@@ -216,6 +214,19 @@
     (message "file %s is not exits!" ywb-dict-file)))
 (ywb-read-dict-file)
 
+(defun ywb-change-window-size (n char)
+  "Use {}^v to change window size, any key to quit"
+  (interactive "p\ncdirect({}^v): ")
+  (while (string-match (char-to-string char) "{}^v")
+    (cond ((char-equal ?\{ char)
+           (enlarge-window-horizontally (- n)))
+          ((char-equal ?\} char)
+           (enlarge-window-horizontally n))
+          ((char-equal ?^ char)
+           (enlarge-window (- n)))
+          ((char-equal ?v char)
+           (enlarge-window n)))
+    (setq char (read-char))))
 ;; favorite-window-config
 (defun ywb-favorite-window-config (&optional percent)
   "Split window to proper portion"
@@ -295,6 +306,22 @@
           (imenu--completion-buffer (cdr choice) prompt)
         choice))))
 ;;;}}}
+
+(defun ywb-sdcv-word (arg)
+  (interactive "P")
+  (require 'showtip)
+  (let (word)
+    (if (and transient-mark-mode mark-active)
+        (setq word (buffer-substring (region-beginning) (region-end)))
+      (setq word (current-word nil t)))
+    (showtip (shell-command-to-string
+              (format "sdcv -n \"%s\"" (shell-quote-argument word)))
+             arg)))
+
+(defun ywb-emacswiki-goto (word)
+  (interactive (list (read-from-minibuffer "Goto Emacswiki page: "
+                                           (current-word))))
+  (browse-url (format "http://www.emacswiki.org/wiki/%s" word)))
 
 (load "func-dired-ext")
 (load "func-elisp-helper")

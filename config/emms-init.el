@@ -1,4 +1,5 @@
 (provide 'emms-init)
+(require 'nnheader)
 
 ;;{{{  Basic settings
 (deh-section "emms-setup"
@@ -192,18 +193,6 @@ information when needed."
     ;; add a sentinel for signaling termination
     (set-process-sentinel process 'emms-player-simple-sentinel))
   (emms-player-started emms-player-mplayer))
-(defun emms-player-mplayer-playable-p (track)
-  "Return non-nil when we can play this track."
-  (and (executable-find emms-player-mplayer-command-name)
-       (memq (emms-track-type track) '(file url))
-       (string-match (emms-player-get 'emms-player-mplayer 'regexp)
-                     (emms-track-name track))))
-(emms-player-set 'emms-player-mplayer
-                 'regexp
-                 (regexp-opt '(".ogg" ".mp3" ".wav" ".mpg" ".mpeg" ".wmv"
-                               ".wma" ".mov" ".avi" ".divx" ".ogm" ".asf"
-                               ".mkv" "http://" "mms://" ".rm" ".rmvb" ".mp4"
-                               ".flac" ".vob" ".m4a" ".flv")))
 ;;}}}
 
 ;;{{{  Extra commands
@@ -299,22 +288,22 @@ information when needed."
 ;;}}}
 
 ;;{{{  mode-line and header-line
-(setq frame-title-format `(,(format "emacs%d@%%b %%f --" emacs-major-version)
-                           (vc-mode vc-mode)
-                           mode-line-modes
-                           (which-func-mode
-                            ("" which-func-format
-                             "--"))))
-(setq-default mode-line-format 
-              '(#("-" 0 1
-                  (auto-composed t help-echo "mouse-1: select (drag to resize), mouse-2: delete others, mouse-3: delete this"))
-                mode-line-mule-info mode-line-modified mode-line-frame-identification
-                mode-line-buffer-identification
-                mode-line-position
-                (global-mode-string
-                 (#("--" 0 2
-                    (help-echo "mouse-1: select (drag to resize), mouse-2: delete others, mouse-3: delete this"))
-                  global-mode-string))))
+;; (setq frame-title-format `(,(format "emacs%d@%%b %%f --" emacs-major-version)
+;;                            (vc-mode vc-mode)
+;;                            mode-line-modes
+;;                            (which-func-mode
+;;                             ("" which-func-format
+;;                              "--"))))
+;; (setq-default mode-line-format 
+;;               '(#("-" 0 1
+;;                   (auto-composed t help-echo "mouse-1: select (drag to resize), mouse-2: delete others, mouse-3: delete this"))
+;;                 mode-line-mule-info mode-line-modified mode-line-frame-identification
+;;                 mode-line-buffer-identification
+;;                 mode-line-position
+;;                 (global-mode-string
+;;                  (#("--" 0 2
+;;                     (help-echo "mouse-1: select (drag to resize), mouse-2: delete others, mouse-3: delete this"))
+;;                   global-mode-string))))
 ;; (setq global-mode-string
 ;;       (append (remove-if (lambda (s)
 ;;                            (and (symbolp s) (string-match "emms" (symbol-name s))))
@@ -398,6 +387,7 @@ information when needed."
     ("-" . 'emms-volume-amixer-lower)
     ("g" . 'ywb-emms-restart)
     ("t" . 'emms-lyrics-visit-lyric)
-    ("=" . 'emms-volume-amixer-raise)))
+    ("=" . 'emms-volume-amixer-raise))
+  (define-key dired-mode-map "P" 'emms-add-dired))
 ;;}}}
 (emms-history-load)

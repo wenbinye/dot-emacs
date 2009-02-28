@@ -163,7 +163,7 @@
          (when w3m-contents-url
            (setq w3m-contents-url (w3m-expand-url w3m-contents-url)))))))
 
-(eval-after-load "filesets"
+'(eval-after-load "filesets"
   '(progn
      (defun filesets-add-buffer (&optional name buffer)
        "Add BUFFER (or current-buffer) to the fileset called NAME.
@@ -352,6 +352,21 @@ updating sourcepair-source-extensions or sourcepair-header-extensions)"
         (narrow-to-region (region-beginning) (region-end)))
     ad-do-it))
 (ad-activate 'occur)
-(defadvice browse-url-generic (before ywb-browse-url-generic)
-  (setq url (replace-regexp-in-string "\\cC" 'url-hexify-string url)))
-(ad-activate 'browse-url-generic)
+;; (defadvice browse-url-generic (before ywb-browse-url-generic)
+;;   (setq url (replace-regexp-in-string "\\cC" 'url-hexify-string url)))
+;; (ad-activate 'browse-url-generic)
+(defadvice browse-url-file-url (after ywb-url-han)
+  (let ((file ad-return-value))
+    (while (string-match "[\x7f-\xff]" file)
+      (let ((enc (format "%%%x" (aref file (match-beginning 0)))))
+        (setq file (replace-match enc t t file))))
+    (setq ad-return-value file)))
+(ad-activate 'browse-url-file-url)
+
+(eval-after-load "shell"
+  '(defun shell-cd (dir)
+     "Do normal `cd' to DIR, and set `list-buffers-directory'."
+     (cd dir)
+     (when shell-dirtrackp
+       (setq list-buffers-directory default-directory)
+       (rename-buffer  (concat "*shell: " default-directory "*") t))))
