@@ -1,0 +1,20 @@
+-*- outline -*-
+
+* How to install my .emacs?
+
+$ cd ~/
+$ svn co http://dot-emacs.googlecode.com/svn/trunk/wenbinye -o .emacs.d
+$ cd .emacs.d
+$ svn propedit svn:externals .
+
+Add following line:
+site-lisp http://ywb-codes.googlecode.com/svn/trunk/emacs/site-lisp
+
+$ svn up
+
+That all.
+
+* Install PDE
+$ cpan install Emacs::PDE
+
+* install eim
