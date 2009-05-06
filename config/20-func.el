@@ -323,9 +323,8 @@
                                            (current-word))))
   (browse-url (format "http://www.emacswiki.org/wiki/%s" word)))
 
-(load "func-dired-ext")
-(load "func-elisp-helper")
-(load "func-prog")
+(dolist (func '("func-dired-ext" "func-elisp-helper" "func-prog"))
+  (load (expand-file-name func ywb-config-dir)))
 
 (deh-section "function-alias"
   (defalias 'yes-or-no-p 'y-or-n-p)

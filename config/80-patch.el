@@ -218,20 +218,6 @@ User will be queried, if no fileset name is provided."
          (find-file (cadr (nth 2 (assoc-default (ido-completing-read "file: " set) set))))))
      ))
 
-(when (= emacs-major-version 23)
-  (eval-after-load "descr-text"
-    '(progn
-       (defun describe-char-display (pos char)
-         (if (display-graphic-p (selected-frame))
-             (let ((display (internal-char-font pos char)))
-               (and display
-                    (setcar display (string-as-multibyte (car display)))
-                    display))
-           (let* ((coding (terminal-coding-system))
-                  (encoded (encode-coding-char char coding)))
-             (if encoded
-                 (encoded-string-description encoded coding))))))))
-
 (defun PC-look-for-include-file ()
   (if (string-match "[\"<]\\([^\"<>]*\\)[\">]?$" (buffer-file-name))
       (let ((name (substring (buffer-file-name)

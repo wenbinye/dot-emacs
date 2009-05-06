@@ -93,14 +93,15 @@
       (setq unread-command-events (list ?\^G))
       (select-safe-coding-system-interactively
        from to codings unsafe rejected (car codings)))))
+
 (defun ywb-generate-loaddefs ()
   (interactive)
   (require 'autoload)
   (with-temp-buffer
     (dolist (file
              (append
-              (directory-files "~/.emacs.d/config/" t "func-.*.el$")
-              (directory-files "~/.emacs.d/site-lisp/mycontrib/" t ".*.el$")))
+              (directory-files ywb-config-dir t "func-.*.el$")
+              (directory-files (expand-file-name "contrib" ywb-site-lisp-dir) t ".*.el$")))
       (unless (file-directory-p file)
         (generate-file-autoloads file)))
     (write-region (point-min) (point-max) "~/.emacs.d/config/100-loaddefs.el")))

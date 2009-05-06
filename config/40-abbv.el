@@ -192,8 +192,22 @@
   (setq msf-abbrev-mode-alias
         '((c++-mode . c-mode)
           (cperl-mode . perl-mode)))
-  (dolist (hook '(c++-mode-hook c-mode-hook
-                                java-mode-hook
-                                cperl-mode-hook))
-    (add-hook hook 'msf-abbrev-mode)))
+  (if (file-exists-p msf-abbrev-root)
+      (dolist (hook '(c++-mode-hook c-mode-hook
+                                    java-mode-hook
+                                    cperl-mode-hook))
+        (add-hook hook 'msf-abbrev-mode))))
+;;}}}
+
+;;{{{  other abbrev
+(define-abbrev-table 'lisp-mode-abbrev-table
+  '(
+    ("itv" "interactive" nil 1)
+    ))
+
+(define-abbrev-table 'shell-mode-abbrev-table
+  '(
+    ("apti" "sudo aptitude install" nil 0)
+    ("apts" "sudo aptitude search" nil 1)
+    ))
 ;;}}}

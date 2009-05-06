@@ -12,9 +12,18 @@ site-lisp http://ywb-codes.googlecode.com/svn/trunk/emacs/site-lisp
 
 $ svn up
 
+When start emacs, use M-x ywb-generate-loaddefs to create autoload
+config. Use M-x load-file RET ~/.emacs.d/config/100-loaddefs.el RET to
+load for current session. It will load automaticly next time start
+emacs.
+
 That all.
 
 * Install PDE
 $ cpan install Emacs::PDE
 
 * install eim
+$ cd /tmp
+$ svn co http://ywb-codes.googlecode.com/svn/trunk/emacs/eim
+$ cd eim
+$ make install ELISPDIR=$HOME/.emacs.d/site-lisp/eim

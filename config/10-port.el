@@ -5,7 +5,7 @@
 (deh-section "env"
   (setenv "GIT_PAGER" "cat")
   (setenv "PAGER" "cat")
-  (setenv "EDITOR" "/home/ywb/local/bin/emacsclient")
+  (setenv "EDITOR" "emacsclient")
   )
 
 (deh-section "coding-system"
@@ -77,7 +77,10 @@
       (let ((msvc-path "D:\\Programs\\MSVC\\"))
         (setenv "PATH" (concat msvc-path "bin;" (getenv "PATH")))
         (setenv "INCLUDE" (concat msvc-path "include;" (getenv "INCLUDE")))
-        (setenv "LIB" (concat msvc-path "lib;" (getenv "LIB")))))))
+        (setenv "LIB" (concat msvc-path "lib;" (getenv "LIB")))))
+    (add-hook 'shell-mode-hook
+              (lambda ()
+                (comint-send-string (get-buffer-process (current-buffer)) "set PERLIO=:unix\n")))))
 
 (deh-section "linux"
   (when (eq system-type 'gnu/linux)
@@ -147,5 +150,5 @@
   (when (= emacs-major-version 23)
     (require 'fenc nil t)
     (when (eq window-system 'x)
-      (load "my-fontset.el"))
+      (load (expand-file-name "my-fontset.el" ywb-config-dir)))
     ))

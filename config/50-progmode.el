@@ -176,7 +176,7 @@ With argument, position cursor at end of buffer."
             (lambda ()
               ;; (when buffer-file-name
               ;;   (executable-set-magic "bash" nil t t))
-              (require 'inf-sh-mode)))
+              (deh-require 'inf-sh-mode)))
   (add-hook 'sh-set-inferior-hook
             (lambda ()
               (keep-end-watch-this

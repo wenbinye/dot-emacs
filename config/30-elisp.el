@@ -218,7 +218,6 @@
                           #'wcy-shell-mode-kill-buffer-on-exit)
 
     (ansi-color-for-comint-mode-on)
-    (comint-send-string (get-buffer-process (current-buffer)) "set PERLIO=:unix\n")
     (setq-default
      comint-dynamic-complete-functions
      (let ((list (default-value 'comint-dynamic-complete-functions)))
