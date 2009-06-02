@@ -57,6 +57,14 @@
                               (lambda (&rest args)
                                 (message "Compress finished. Press g to flush directory!")))))))
 ;; jump
+(defun ywb-hanstr-to-py (str)
+  (require 'quail)
+  (unless (quail-package "chinese-py")
+    (load "quail/PY"))
+  (let ((quail-current-package (quail-package "chinese-py")))
+    (mapconcat (lambda (char)
+                 (car (quail-find-key char)))
+               (append str nil) "")))
 (defun ywb-dired-jump-to-file ()
   "Quick jump to the file in dired-mode"
   (interactive)
@@ -80,7 +88,11 @@
                                (not (or (looking-at name) (bobp))))))
                      (t
                       (setq name (concat name (char-to-string input)))))
-               (while (not (or (looking-at name) (eobp)))
+               (while (not (or (eobp)
+                               (let ((fn (dired-get-filename t t)))
+                                 (and fn
+                                      (setq fn (replace-regexp-in-string "\\cC" 'ywb-hanstr-to-py fn))
+                                      (string-match (concat "^" (regexp-quote name)) fn)))))
                  (dired-next-line 1))
                t)))))
 ;; count size
