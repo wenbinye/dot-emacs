@@ -30,6 +30,14 @@
 】；：？！±×÷∶°′″℃／＼＂＿￣｜ㄥ"  nil))
     (modify-syntax-entry char "." (standard-syntax-table))))
 
+(deh-section "ffap"
+  (setq ffap-string-at-point-mode-alist
+        '((file "--{}:\\\\$+<>@-Z_a-z~*?\x100-\xffff" "<@" "@>;.,!:")
+          (url "--:=&?$+@-Z_a-z~#,%;*" "^A-Za-z0-9" ":;.,!?")
+          (nocolon "--9$+<>@-Z_a-z~" "<@" "@>;.,!?")
+          (machine "-a-zA-Z0-9." "" ".")
+          (math-mode ",-:$+<>@-Z_a-z~`" "<" "@>;.,!?`:"))))
+
 (deh-section "PATH"
   ;; add more directory to environment variable PATH
   (let ((path (split-string (getenv "PATH") path-separator)))
@@ -113,11 +121,8 @@
                    "~/local/share/info"))
       (add-to-list 'Info-default-directory-list dir))
 
-    (setq browse-url-generic-program "opera"
-          browse-url-generic-args '("-newpage")
-          browse-url-browser-function 'browse-url-generic)
     (if (= emacs-major-version 23)
-        (setq find-function-C-source-directory "/home/ywb/downloads/cvs.savannah.gnu.org/emacs/src")
+        (setq find-function-C-source-directory "/home/ywb/softwares/sources/emacs-23.1/src")
       (setq find-function-C-source-directory "/home/ywb/downloads/cvs.savannah.gnu.org/emacs-22/src"))
 
     (deh-section "font-config-emacs22"

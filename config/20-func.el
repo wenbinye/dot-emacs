@@ -19,7 +19,7 @@
   (let ((thefile (expand-file-name file dir)))
     (if (file-exists-p thefile)
         thefile
-      (setq pdir (expand-file-name ".." dir))
+      (setq pdir (directory-file-name (file-name-directory dir)))
       (if (string= pdir dir)
           nil
         (ywb-find-top-directory file pdir)))))

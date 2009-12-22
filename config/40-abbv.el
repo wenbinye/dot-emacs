@@ -186,17 +186,17 @@
 ;; ;;}}}
 
 ;;{{{ msf-abbrev
-(deh-require 'msf-abbrev
-  (setq msf-abbrev-indent-after-expansion t)
-  (setq msf-abbrev-root "~/.emacs.d/mode-abbrevs")
-  (setq msf-abbrev-mode-alias
-        '((c++-mode . c-mode)
-          (cperl-mode . perl-mode)))
-  (if (file-exists-p msf-abbrev-root)
-      (dolist (hook '(c++-mode-hook c-mode-hook
-                                    java-mode-hook
-                                    cperl-mode-hook))
-        (add-hook hook 'msf-abbrev-mode))))
+;; (deh-require 'msf-abbrev
+;;   (setq msf-abbrev-indent-after-expansion t)
+;;   (setq msf-abbrev-root "~/.emacs.d/mode-abbrevs")
+;;   (setq msf-abbrev-mode-alias
+;;         '((c++-mode . c-mode)
+;;           (cperl-mode . perl-mode)))
+;;   (if (file-exists-p msf-abbrev-root)
+;;       (dolist (hook '(c++-mode-hook c-mode-hook
+;;                                     java-mode-hook
+;;                                     cperl-mode-hook))
+;;         (add-hook hook 'msf-abbrev-mode))))
 ;;}}}
 
 ;;{{{  other abbrev
@@ -208,6 +208,7 @@
 (define-abbrev-table 'shell-mode-abbrev-table
   '(
     ("apti" "sudo aptitude install" nil 0)
-    ("apts" "sudo aptitude search" nil 1)
+    ("apts" "aptitude search" nil 1)
+    ("wgetm" "wget -p -np -k -m" nil 0)
     ))
 ;;}}}

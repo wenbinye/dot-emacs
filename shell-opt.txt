@@ -1,6 +1,6 @@
 find -depth --help -maxdepth -mindepth -mount -noleaf --version -xdev -ignore_readdir_race -noignore_readdir_race -amin -anewer -atime -cmin -cnewer -ctime -empty -false -fstype -gid -group -ilname -iname -inum -iwholename -iregex -links -lname -mmin -mtime -name -newer -nouser -nogroup -path -perm -regex -wholename -size -true -type -uid -used -user -xtype -delete -print0 -printf -fprintf -print -fprint0 -fprint -ls -fls -prune -quit -exec -ok -execdir -okdir
 apt-cache add gencaches showpkg showsrc stats dump dumpavail unmet search show depends rdepends pkgnames dotty xvcg policy
-aptitude installxc remove purge hold unhold markauto unmarkauto update upgrade dist-upgrade forget-new search show clean autoclean changelog download reinstall
+aptitude install remove purge hold unhold markauto unmarkauto update upgrade dist-upgrade forget-new search show clean autoclean changelog download reinstall
 apt-get update upgrade install remove source build-dep dist-upgrade dselect-upgrade clean autoclean check
 dpkg --get-selections --set-selections --update-avail --merge-avail --clear-avail --forget-old-unavail --print-architecture --compare-versions --licence --admindir --root --instdir --no-debsig --no-act --dry-run --simulate --status-fd --log --ignore-depends --force-help --abort-after
 mplayer -vobsubid -playlist -sub -fps -srate -vid -aid -framedrop -pp -fs -nosound -alang -slang -stop-xscreensaver
@@ -11,3 +11,4 @@ opera -newwindow -newpage -backgroundpage -fullscreen -iconic -geometry -remote 
 swig -chicken -csharp  -guile -java -mzscheme -ocaml  -perl -php -pike -python  -ruby -sexp  -tcl  -xml -c++  -co  -dirprot -Dsymbol  -E -fcompact   -fvirtual    -Fstandard   -Fmicrosoft   -help   -Idir -ignoremissing -importall -includeall -lifile -M -MM -makedefault -module  -nocontract  -nodefault  -nodirprot -noexcept  -noextern -noruntime -o -outdir -runtime  -small -swiglib -v -version -Wall -Wallkw -Werror -w
 tcc -run
 darcs help  add remove  mv  replace revert  unrevert whatsnew  record unrecord amend-record  resolve tag setpref  rollback diff changes annotate dist  trackdown query  pull unpull obliterate  push send apply get put initialize optimize check repair
+git add bisect branch checkout clone commit diff fetch grep init log merge mv pull push rebase reset rm show status tag config

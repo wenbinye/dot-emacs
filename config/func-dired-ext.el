@@ -74,7 +74,7 @@
         input)
     (while (progn
              (setq input (read-char (format "Jump to: %s" name)))
-             (if (and (< input ? ) (not (member input (list ?\d ?\^n ?\^P))))
+             (if (and (< input ?\s) (not (member input (list ?\d ?\^n ?\^P))))
                  (progn (setq unread-command-events (list input)) nil)
                (cond ((= input ?\d)
                       (progn (setq name (substring name 0 -1))

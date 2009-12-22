@@ -77,7 +77,7 @@ e.g., (emms-lyrics-find-lyric \"abc.lrc\")"
             (if (file-exists-p lrc)
                 (throw 'found t)))
           (when (and (emms-track-get track 'info-title)
-                     (not (string= emms-lyrics-dir "")))
+                     (file-directory-p emms-lyrics-dir))
             (setq lrc
                   (car
                    (split-string

@@ -86,3 +86,28 @@
 (setq abbrev-file-name "~/.emacs.d/abbrev_defs")
 (put 'define-abbrev-table 'lisp-indent-function 1)
 ;;}}}
+
+(custom-set-variables
+ '(confirm-kill-emacs (quote y-or-n-p))
+ '(cperl-invalid-face nil)
+ '(desktop-globals-to-save (quote (sql-mysql-schema bibus-formats desktop-missing-file-warning search-ring regexp-search-ring register-alist windata-named-winconf)))
+ '(diff-switches "-ubB")
+ '(dired-listing-switches "-alvh")
+ '(ediff-split-window-function (quote split-window-horizontally))
+ '(ediff-window-setup-function (quote ediff-setup-windows-plain))
+ '(flymake-gui-warnings-enabled nil)
+ '(folding-folding-on-startup nil)
+ '(ido-enable-regexp t)
+ '(ido-everywhere t)
+ '(outline-minor-mode-prefix "")
+ '(tooltip-use-echo-area nil)
+ '(view-read-only t)
+ '(woman-cache-filename "~/.wmncach.el")
+ '(woman-manpath (quote ("/usr/man" "/usr/share/man" "/usr/X11R6/man" "/usr/local/man" "/home/ywb/proj/perl/man" "/usr/share/man/zh_TW" "/usr/share/man/zh_CN"))))
+
+(put 'downcase-region 'disabled nil)
+(put 'narrow-to-region 'disabled nil)
+(put 'scroll-left 'disabled nil)
+(put 'upcase-region 'disabled nil)
+(put 'erase-buffer 'disabled nil)
+

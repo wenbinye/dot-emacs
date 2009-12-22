@@ -81,15 +81,15 @@
     )
 
   (deh-define-key ctl-cc-map
-    ("a" . 'ywb-add-dict-word)
-    ("b" . 'bm-toggle)
+    ("a" . 'org-agenda)
+    ("b" . 'org-iswitchb)
     ("c" . 'eim-table-add-word)
     ("d" . 'deh-customize-inplace)
     ("f" . 'find-library)
     ("g" . 'gtk-lookup-symbol)
     ("h" . 'highlight-regexp)
     ("i" . 'ispell-word)
-    ("l" . 'font-lock-fontify-buffer)
+    ("l" . 'org-store-link)
     ("m" . 'markup-pickup-face-ap)
     ("n" . 'hi-lock-next)
     ("o" . 'ywb-org-table-convert-region)

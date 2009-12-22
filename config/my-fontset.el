@@ -49,19 +49,19 @@
 ;; frame size switching on startup.
 
 ;; Way 1
-;(let ((zh-font "-unknown-AR PL UMing CN-*-*-*-*-16-*-*-*-*-*-*-*")
-(let ((zh-font "AR PL UMing CN:pixelsize=14")
-      (fontset "fontset-my"))
-  (create-fontset-from-fontset-spec
-    (concat
-      "-unknown-DejaVu Sans Mono-*-*-*-*-12-*-*-*-*-*-" fontset
-      ",kana:"          zh-font
-      ",han:"           zh-font
-      ",symbol:"        zh-font
-      ",cjk-misc:"      zh-font
-      ",bopomofo:"      zh-font))
-  (set-default-font fontset)
-  (add-to-list 'default-frame-alist `(font . ,fontset)))
+;; ;(let ((zh-font "-unknown-AR PL UMing CN-*-*-*-*-16-*-*-*-*-*-*-*")
+;; (let ((zh-font "WenQuanYi Bitmap Song:pixelsize=13")
+;;       (fontset "fontset-my"))
+;;   (create-fontset-from-fontset-spec
+;;     (concat
+;;       "-unknown-DejaVu Sans Mono-*-*-*-*-12-*-*-*-*-*-" fontset
+;;       ",kana:"          zh-font
+;;       ",han:"           zh-font
+;;       ",symbol:"        zh-font
+;;       ",cjk-misc:"      zh-font
+;;       ",bopomofo:"      zh-font))
+;;   (set-default-font fontset)
+;;   (add-to-list 'default-frame-alist `(font . ,fontset)))
   ;; or set font for new frame like this:
   ;(add-to-list 'after-make-frame-functions
   ;             (lambda (new-frame)
@@ -71,11 +71,11 @@
 
 
 ;; Way 2
-;(let ((fontset nil)
-;      (zh-font (font-spec :family "AR PL UMing CN" :size 16)))
-;  (set-default-font "DejaVu Sans Mono:pixelsize=14:foundry=unknown")
-;  (setq fontset (frame-parameter nil 'font))
-;  (dolist (charset '(kana han symbol cjk-misc bopomofo))
-;    (set-fontset-font fontset charset zh-font))
-;  (add-to-list 'default-frame-alist `(font . ,fontset)))
+(let ((fontset nil)
+      (zh-font (font-spec :family "WenQuanYi Bitmap Song" :size 12)))
+  (set-default-font "DejaVu Sans Mono:pixelsize=12:foundry=unknown")
+  (setq fontset (frame-parameter nil 'font))
+  (dolist (charset '(kana han symbol cjk-misc bopomofo))
+    (set-fontset-font fontset charset zh-font))
+  (add-to-list 'default-frame-alist `(font . ,fontset)))
  

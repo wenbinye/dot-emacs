@@ -47,7 +47,7 @@
                     ("7z x" "7z")
                     ("djview" "djvu")
                     ("perl" "pl")
-                    ("myopera" "xml" "html" "htm" "mht")))
+                    ("firefox" "xml" "html" "htm" "mht")))
       (add-to-list 'dired-guess-shell-alist-default
                    (list (concat "\\." (regexp-opt (cdr file) t) "$")
                          (car file)))))
@@ -244,27 +244,6 @@
   (setq session-save-file-coding-system 'chinese-gbk)
   (add-to-list 'session-globals-exclude 'org-mark-ring)
   (add-hook 'after-init-hook 'session-initialize))
-
-(deh-section "org"
-  (setq org-CUA-compatible t)
-  (add-hook 'org-load-hook
-            (lambda ()
-              ;; (let (org-CUA-compatible)
-              ;;   (define-key org-mode-map (org-key 'S-return)   nil)
-              ;;   (define-key org-mode-map (org-key 'S-up)       nil)
-              ;;   (define-key org-mode-map (org-key 'S-down)     nil)
-              ;;   (define-key org-mode-map (org-key 'S-left)     nil)
-              ;;   (define-key org-mode-map (org-key 'S-right)    nil))
-              (add-to-list 'org-link-frame-setup '(file . my-find-file-function))
-              (define-key org-mode-map (kbd "C-c ^") 'ywb-org-table-sort-lines)
-              (define-key org-mode-map (kbd "C-c $") nil)))
-  (setq org-export-with-sub-superscripts nil)
-  (defun my-find-file-function (file)
-    "find file according to the file extension."
-    (funcall (or (assoc-default file ywb-dired-guess-command-alist
-                                'string-match)
-                 'find-file) file))
-  (setq org-file-apps-defaults-gnu '((t . emacs))))
 
 (deh-section "std-lib"
   (partial-completion-mode 1)
@@ -494,7 +473,6 @@
     "Customize blank visualization." t)
   ;; sdcv
   (deh-section "sdcv"
-    (setq sdcv-dictionary-list '("DrEye4in1词典"))
     (autoload 'sdcv-search "sdcv-mode" "Search dictionary using sdcv" t))
 
   (deh-section "linum"
@@ -626,7 +604,7 @@
     (when (featurep 'eim-extra)
       (global-set-key ";" 'eim-insert-ascii)))
 
-  (autoload 'hexl-mode "hexl+" "Edit a file in a hex dump format" t)
+  ;; (autoload 'hexl-mode "hexl+" "Edit a file in a hex dump format" t)
   (deh-section "mule-menu"
     (require 'english-menu nil t)
     (require 'chinese-menu nil t)
@@ -783,3 +761,9 @@ If the flag is set, only complete with local files."
                         (if (re-search-backward "^sub[ \t]+\\([^({ \t\n]+\\)" nil t)
                             (match-string-no-properties 1)))))))
    ))
+
+(deh-section "weblogger"
+  (setq weblogger-server-username "ywb"
+        weblogger-server-password "iu4tko97"
+        weblogger-server-url "http://tuanba.net/cgi-bin/mt/mt-xmlrpc.cgi"))
+      

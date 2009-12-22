@@ -3,7 +3,7 @@
 * How to install my .emacs?
 
 $ cd ~/
-$ svn co http://dot-emacs.googlecode.com/svn/trunk/wenbinye -o .emacs.d
+$ svn co http://dot-emacs.googlecode.com/svn/trunk/wenbinye .emacs.d
 $ cd .emacs.d
 $ svn propedit svn:externals .
 

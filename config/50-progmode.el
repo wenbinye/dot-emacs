@@ -153,7 +153,16 @@ With argument, position cursor at end of buffer."
     (skip-chars-backward "\t| ")
     (if (re-search-backward "[\t|]" nil t)
         (goto-char (match-end 0))))
-
+  (setq sql-imenu-generic-expression
+        ;; Items are in reverse order because they are rendered in reverse.
+        '(("Rules/Defaults" "^\\s-*create\\s-+\\(\\w+\\s-+\\)*\\(rule\\|default\\)\\s-+\\(\\w+\\)" 3)
+          ("Sequences" "^\\s-*create\\s-+\\(\\w+\\s-+\\)*sequence\\s-+\\(\\w+\\)" 2)
+          ("Triggers" "^\\s-*create\\s-+\\(\\w+\\s-+\\)*trigger\\s-+\\(\\w+\\)" 2)
+          ("Functions" "^\\s-*\\(create\\s-+\\(\\w+\\s-+\\)*\\)?function\\s-+\\(\\w+\\)" 3)
+          ("Procedures" "^\\s-*\\(create\\s-+\\(\\w+\\s-+\\)*\\)?proc\\(edure\\)?\\s-+\\(\\w+\\)" 4)
+          ("Packages" "^\\s-*create\\s-+\\(\\w+\\s-+\\)*package\\s-+\\(body\\s-+\\)?\\(\\w+\\)" 3)
+          ("Indexes" "^\\s-*create\\s-+\\(\\w+\\s-+\\)*index\\s-+\\(\\w+\\)" 2)
+          ("Tables/Views" "^\\s-*create\\s-+\\(\\w+\\s-+\\)*\\(table\\|view\\)\\s-+\\(?:if\\s-+not\\s-+exists\\s-+\\)?\\(\\w+\\)" 3)))
   (add-hook 'sql-mode-hook
             (lambda ()
               (font-lock-add-keywords 'sql-mode
@@ -197,13 +206,23 @@ With argument, position cursor at end of buffer."
               (define-key comint-mode-map "\C-d" 'comint-delchar-or-maybe-eof))))
 
 (deh-section "java"
-  (add-hook 'java-mode-hook
-            (lambda ()
-              (c-set-style "java")
-              (if (and (boundp 'msf-abbrev-mode-abbrevs)
-                       (null (assoc 'c-mode msf-abbrev-mode-abbrevs)))
-                  (msf-abbrev-scan-mode 'c-mode))
-              (define-key java-mode-map "\t" 'hippie-expand))))
+  (add-to-list 'load-path "/usr/local/jdee/lisp/")
+  (defun jde-init ()
+    (interactive)
+    (require 'cedet)
+    (require 'jde)
+    (jde-mode)
+    )
+  (defun my-java-mode-hook ()
+    (c-set-style "java");
+    (setq c-basic-offset 4))
+  (add-hook 'java-mode-hook 'my-java-mode-hook))
+
+(deh-section "js2"
+  (defun my-js2-mode-hook ()
+    (setq forward-sexp-function nil)
+    )
+  (add-hook 'js2-mode-hook 'my-js2-mode-hook))
 
 (deh-section "hla"
   (autoload 'hla-mode "hla-mode" "hla major mode" t)
@@ -311,6 +330,19 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.twiki$" . oddmuse-mode)))
 
 (deh-section "php"
+  (add-to-list 'interpreter-mode-alist '("php" . php-mode))
+  (autoload 'geben "geben" "" t)
+  (defun my-geben-open-file (file)
+    (interactive
+     (list
+      (let ((source-file
+             (replace-regexp-in-string "^file://" ""
+                                       (geben-session-source-fileuri geben-current-session (buffer-file-name)))))
+        (read-file-name "Open file: " (file-name-directory source-file)))))
+    (geben-open-file (concat "file://" file)))
+  (add-hook 'geben-context-mode-hook
+            (lambda ()
+              (define-key geben-mode-map "f" 'my-geben-open-file)))
   (deh-require 'php-doc)
   (deh-require 'simpletest)
   (setq simpletest-create-test-function 'simpletest-create-test-template)
