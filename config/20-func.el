@@ -331,3 +331,8 @@
   (defalias 'chr 'char-to-string)
   (defalias 'sc 'smart-compile)
   (defalias 'list-ascii 'ascii-table-show))
+
+(defun ywb-set-paste ()
+  (interactive)
+  (fundamental-mode)
+  (setq indent-line-function 'ignore))

@@ -313,6 +313,7 @@ With argument, position cursor at end of buffer."
 (deh-section "php"
   (deh-require 'php-doc)
   (deh-require 'simpletest)
+  (setq simpletest-create-test-function 'simpletest-create-test-template)
   (setq php-imenu-generic-expression
         '(
           ("Private Methods"
@@ -338,7 +339,10 @@ With argument, position cursor at end of buffer."
            'php-doc-eldoc-function)
       (eldoc-mode 1))
     (when (featurep 'simpletest)
-      (simpletest-mode 1))
+      (simpletest-mode 1)
+      (define-key simpletest-mode-map "\C-ctb" 'simpletest-switch)
+      (define-key simpletest-mode-map "\C-ctc" 'simpletest-create-test)
+      (define-key simpletest-mode-map "\C-ctr" 'simpletest-run-test))
     (local-set-key (kbd "C-M-a") 'beginning-of-defun)
     (local-set-key (kbd "C-M-e") 'end-of-defun)
     (local-set-key (kbd "C-c s") 'compile-dwim-compile))
