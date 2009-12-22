@@ -36,8 +36,6 @@
               (gtk-perl-mode 1)
               (keep-end-watch-this (buffer-name)))))
 
-(add-to-list 'load-path (expand-file-name "pde" ywb-startup-dir))
-(deh-require 'pde-load)
 (deh-section "perl"
   ;; (setq perlapi-file "e:/Programs/Perl/lib/pod/perlapi.pod")
   (defun ywb-cperl-mode-hook ()

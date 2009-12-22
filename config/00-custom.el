@@ -9,12 +9,8 @@
 (setq default-justification 'full)
 (setq adaptive-fill-mode nil)
 (setq fill-column 70)
-;; no scroll bar
-(set-scroll-bar-mode nil)       
 ;; 关闭开机画面
 (setq inhibit-startup-message t)
-;; 关闭按钮
-(tool-bar-mode -1)
 ;; 没有提示音
 (setq ring-bell-function 'ignore)
 ;; (setq visible-bell t)

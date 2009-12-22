@@ -1,5 +1,8 @@
 ;; -*- mode: Emacs-Lisp -*-
 ;;{{{ etags, hideshow, tree-imenu, smart-compile
+(add-to-list 'load-path (expand-file-name "pde" ywb-startup-dir))
+(deh-require 'pde-load)
+
 ;; etags
 (deh-section "etags"
   (setq tags-add-tables nil
@@ -308,31 +311,44 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.twiki$" . oddmuse-mode)))
 
 (deh-section "php"
+  (deh-require 'php-doc)
+  (deh-require 'simpletest)
   (setq php-imenu-generic-expression
         '(
           ("Private Methods"
-           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?private\\s-+\\(?:static\\s-+\\)?function\\s-+\\(&?\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
+           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?private\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
           ("Protected Methods"
-           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?protected\\s-+\\(?:static\\s-+\\)?function\\s-+\\(&?\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
+           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?protected\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
           ("Public Methods"
-           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?public\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(&??:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
+           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?public\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
           ("Classes"
            "^\\s-*class\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*" 1)
           (nil
-           "^\\s-*\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*function\\s-+\\(&?\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
+           "^\\s-*\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
           ))
+  (add-to-list 'magic-mode-alist '("\\`<\\?php" . php-mode))
+  (add-to-list 'interpreter-mode-alist '("php" . php-mode))
   (defun my-php-mode-hook ()
     (tempo-use-tag-list 'tempo-php-tags)
     (font-lock-add-keywords nil gtkdoc-font-lock-keywords)
+    (setq php-beginning-of-defun-regexp "^\\s-*\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(")
     (when (featurep 'php-doc)
       (local-set-key "\t" 'php-doc-complete-function)
-      (local-set-key (kbd "\C-c h") 'php-doc)
       (set (make-local-variable 'eldoc-documentation-function)
            'php-doc-eldoc-function)
       (eldoc-mode 1))
+    (when (featurep 'simpletest)
+      (simpletest-mode 1))
     (local-set-key (kbd "C-M-a") 'beginning-of-defun)
     (local-set-key (kbd "C-M-e") 'end-of-defun)
-    (local-set-key (kbd "C-c s") 'compile-dwim-compile)
-    )
-  (add-hook 'php-mode-hook 'my-php-mode-hook))
-
+    (local-set-key (kbd "C-c s") 'compile-dwim-compile))
+  (add-hook 'php-mode-hook 'my-php-mode-hook)
+  (defvar ffap-php-path
+    (let ((include-path
+           (shell-command-to-string "php -r 'echo get_include_path();'")))
+      (split-string include-path ":"))
+    "php include path")
+  (defun my-php-ffap-locate (name)
+    "Find php require or include files"
+    (ffap-locate-file name t ffap-php-path))
+  (add-to-list 'ffap-alist '(php-mode . my-php-ffap-locate)))

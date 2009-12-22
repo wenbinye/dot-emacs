@@ -8,6 +8,14 @@
   (setenv "EDITOR" "emacsclient")
   )
 
+(deh-section "window-system"
+  (if (eq window-system 'x)
+      (progn
+        ;; no scroll bar
+        (set-scroll-bar-mode nil)       
+        ;; 关闭按钮
+        (tool-bar-mode -1))))
+    
 (deh-section "coding-system"
   (unless (coding-system-p 'gbk)
     (define-coding-system-alias 'gbk 'chinese-iso-8bit))
