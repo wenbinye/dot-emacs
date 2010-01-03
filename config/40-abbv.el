@@ -27,9 +27,9 @@
   (tempo-define-template
    "perl-funcdesc"
    '("#==========================================================" n
-     "# Input  : " p n
-     "# Output : " p n
-     "# Desc   :" p n
+     "# " p n
+     "# @params " p n
+     "# @return " p n
      "#==========================================================")
    "funcdesc"
    "Insert perl function description"

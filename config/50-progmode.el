@@ -386,5 +386,7 @@ With argument, position cursor at end of buffer."
     "php include path")
   (defun my-php-ffap-locate (name)
     "Find php require or include files"
-    (ffap-locate-file name t ffap-php-path))
+    (if (string-match "^[a-zA-Z0-9_]+$" name)
+        (ffap-locate-file (replace-regexp-in-string "_" "/" name) '(".class.php" ".php") ffap-php-path)
+      (ffap-locate-file name t ffap-php-path)))
   (add-to-list 'ffap-alist '(php-mode . my-php-ffap-locate)))

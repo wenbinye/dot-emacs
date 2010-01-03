@@ -336,3 +336,10 @@
   (interactive)
   (fundamental-mode)
   (setq indent-line-function 'ignore))
+
+(define-generic-mode vimrc-mode
+  '("\"")
+  '("set" "syntax")
+  nil
+  '("\\.vim\\'")
+  nil)
