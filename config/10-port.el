@@ -86,7 +86,6 @@
           mysql-password ""
           mysql-options nil
           mysql-program "dbsh")
-    (setq inferior-ess-program "C:\\Program Files\\R\\R-2.2.1\\bin\\Rterm.exe" t)
     (setq gtk-perl-doc-file "f:/ywb/.emacs.d/site-lisp/mycontrib/gtk-doc.txt")
     (defun ywb-vcvars32 ()
       (interactive)
