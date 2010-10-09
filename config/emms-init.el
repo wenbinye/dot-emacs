@@ -6,7 +6,7 @@
   (require 'emms-setup)
   (emms-standard)
   (setq emms-lyrics-coding-system nil   ; automatic decode
-        emms-lyrics-dir "/home/ywb/music/lrc/"
+        emms-lyrics-dir "/media/sda5/Music/lrc/"
         emms-source-file-default-directory "~/music/playlist/" ; source directory
         emms-volume-amixer-control "PCM"
         emms-playlist-buffer-name " *EMMS*"

@@ -33,6 +33,7 @@
     ((kbd "M-RET") . 'muse-insert-list-item)
     ((kbd "C-h j") . 'info-elisp)
     ((kbd "<C-down-mouse-1>") . 'undefined)
+    ((kbd "C-M-r") . 'org-remember)
     )
 
   (deh-define-key (lookup-key global-map "\C-c")
@@ -41,10 +42,10 @@
     ("=" . 'eim-table-add-word)
     ("[" . 'ywb-insert-char-prev-line)
     ("]" . 'ywb-insert-char-next-line)
-    ("a" . 'sourcepair-load)
+    ("a" . 'org-agenda)
     ("b" . 'ywb-create/switch-scratch)
     ("c" . 'ctl-cc-map)
-    ("d" . 'sdcv-search)
+    ("d" . 'dirtree-show)
     ("e" . 'ctl-ce-map)
     ("f" . 'comint-dynamic-complete)
     ("g" . 'fold-dwim-hide-all)
@@ -64,6 +65,7 @@
     ("v" . 'imenu-tree)
     ("w" . 'ywb-favorite-window-config)
     ("x" . 'incr-dwim)
+    ("y" . 'sdcv-search)
     ("z" . 'decr-dwim)
     )
 

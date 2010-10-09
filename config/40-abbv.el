@@ -67,7 +67,7 @@
                            > "* " n
                            > "* @copyright Copyright (c) 2009, Taobao. inc" n
                            > "* @package " n
-                           > "* @author Ye Wenbin<buzhi@taobao.com>" n
+                           > "* @author " user-full-name " <" user-mail-address ">" n
                            > "*/")
                          "fileb"
                          "Insert File DocBlock"

@@ -22,5 +22,6 @@
   (setq org-remember-templates
         '(("Todo" ?t "* TODO %?\n  %i\n  %a" "~/org/TODO.org" "Tasks")
           ("Journal" ?j "* %U %?\n\n  %i\n  %a" "~/org/JOURNAL.org")
-          ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/JOURNAL.org" "New Ideas")))
+          ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/JOURNAL.org" "New Ideas")
+          ("Diary" ?d "* %t %^{天气}\n %i\n" "~/org/Daily.org")))
   )

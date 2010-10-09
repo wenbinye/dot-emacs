@@ -532,6 +532,7 @@
               (lambda ()
                 (set (make-local-variable 'outline-regexp) "---[+]+")
                 (outline-minor-mode 1))))
+  (autoload 'dirtree-show "dirtree" "" t)
   )
 ;;}}}
 

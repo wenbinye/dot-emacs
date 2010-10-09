@@ -174,7 +174,6 @@ With argument, position cursor at end of buffer."
     (add-to-list 'desktop-globals-to-save 'sql-mysql-schema)
     (add-hook 'sql-interactive-mode-hook
               (lambda ()
-                (keep-end-watch-this (current-buffer))
                 (toggle-truncate-lines 1)
                 (define-key sql-interactive-mode-map "\t" 'ywb-sql-completion-or-next-field)
                 (define-key sql-interactive-mode-map (kbd "<backtab>")
@@ -219,6 +218,7 @@ With argument, position cursor at end of buffer."
   (add-hook 'java-mode-hook 'my-java-mode-hook))
 
 (deh-section "js2"
+  (autoload 'inferior-moz-switch-to-mozilla "moz" "MozRepl inferior mode" t)
   (defun my-js2-mode-hook ()
     (setq forward-sexp-function nil)
     )
@@ -280,6 +280,7 @@ With argument, position cursor at end of buffer."
   )
 
 (deh-section "autoloads"
+  (autoload 'pabbrev-mode "pabbrev" nil t)
   (autoload 'svn-status "psvn" nil t)
   (autoload 'js2-mode "js2-mode" "" t)
   (autoload 'git-status "git" "" t)
@@ -292,6 +293,7 @@ With argument, position cursor at end of buffer."
   (autoload 'css-mode "css-mode" "Mode for editing CSS files" t)
   (autoload 'python-mode "python" "Python editing mode." t)
   (autoload 'php-mode "php-mode" "php mode" t)
+  (autoload 'php-documentor-dwim "php-documentor" "php doc helper" t)
   (autoload 'visual-basic-mode "vb-mode" "Visual Basic Mode" t)
   (autoload 'pir-mode "pir-mode" nil t)
   (autoload 'pod-mode "pod-mode" "A major mode to edit pod" t)
@@ -302,6 +304,8 @@ With argument, position cursor at end of buffer."
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
+  (add-to-list 'auto-mode-alist '("\\.json?$" . js-mode))
+  (add-to-list 'auto-mode-alist '("\\.pkg?$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.proc?$" . sql-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(ya?ml\\|fb\\)$" . yaml-mode))
   (add-to-list 'auto-mode-alist '("\\.tt2?$" . html-mode))
@@ -311,7 +315,7 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.asy$" . asy-mode))
   (add-to-list 'auto-mode-alist '("\\.cls$" . LaTeX-mode))
   (add-to-list 'auto-mode-alist '("\\.css$" . css-mode))
-  (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+  (add-to-list 'auto-mode-alist '("\\.js$" . js-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(php[345]?\\|module\\|phtml\\|inc\\)$" . php-mode))
   (add-to-list 'auto-mode-alist '("\\.gp$" . gnuplot-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(hla\\|hhf\\)$" . hla-mode))
@@ -332,20 +336,29 @@ With argument, position cursor at end of buffer."
 (deh-section "php"
   (add-to-list 'interpreter-mode-alist '("php" . php-mode))
   (autoload 'geben "geben" "" t)
-  (defun my-geben-open-file (file)
-    (interactive
-     (list
-      (let ((source-file
-             (replace-regexp-in-string "^file://" ""
-                                       (geben-session-source-fileuri geben-current-session (buffer-file-name)))))
-        (read-file-name "Open file: " (file-name-directory source-file)))))
-    (geben-open-file (concat "file://" file)))
-  (add-hook 'geben-context-mode-hook
-            (lambda ()
-              (define-key geben-mode-map "f" 'my-geben-open-file)))
+
+(defun my-geben-open-current-file ()
+  (interactive)
+  (let ((bufs (buffer-list))
+        (file buffer-file-name)
+        (line (line-number-at-pos))
+        buf session new-buf)
+    (if file
+        (progn
+          (while (and (not session)
+                      bufs)
+            (setq buf (car bufs)
+                  bufs (cdr bufs)
+                  session (buffer-local-value 'geben-current-session buf)))
+          (if session
+              (with-current-buffer buf
+                (geben-open-file (concat "file://" file)))
+            (error "no geben session started")))
+      (error "no file associated"))))
+
   (deh-require 'php-doc)
-  (deh-require 'simpletest)
   (setq simpletest-create-test-function 'simpletest-create-test-template)
+  ; (setq phpunit-create-test-function 'phpunit-create-test-template)
   (setq php-imenu-generic-expression
         '(
           ("Private Methods"
@@ -370,11 +383,19 @@ With argument, position cursor at end of buffer."
       (set (make-local-variable 'eldoc-documentation-function)
            'php-doc-eldoc-function)
       (eldoc-mode 1))
+    (deh-require 'simpletest)
     (when (featurep 'simpletest)
       (simpletest-mode 1)
       (define-key simpletest-mode-map "\C-ctb" 'simpletest-switch)
       (define-key simpletest-mode-map "\C-ctc" 'simpletest-create-test)
       (define-key simpletest-mode-map "\C-ctr" 'simpletest-run-test))
+    ;; (deh-require 'phpunit
+    ;;   (phpunit-mode 1)
+    ;;   (define-key phpunit-mode-map "\C-ctb" 'phpunit-switch)
+    ;;   (define-key phpunit-mode-map "\C-ctc" 'phpunit-create-test)
+    ;;   (define-key phpunit-mode-map "\C-ctr" 'phpunit-run-test))
+    (local-set-key (kbd "C-c C-v") 'my-geben-open-current-file)
+    (local-set-key (kbd "C-c C-d") 'php-documentor-dwim)
     (local-set-key (kbd "C-M-a") 'beginning-of-defun)
     (local-set-key (kbd "C-M-e") 'end-of-defun)
     (local-set-key (kbd "C-c s") 'compile-dwim-compile))
@@ -389,4 +410,5 @@ With argument, position cursor at end of buffer."
     (if (string-match "^[a-zA-Z0-9_]+$" name)
         (ffap-locate-file (replace-regexp-in-string "_" "/" name) '(".class.php" ".php") ffap-php-path)
       (ffap-locate-file name t ffap-php-path)))
+  (add-to-list 'PC-include-file-path "/usr/share/php")
   (add-to-list 'ffap-alist '(php-mode . my-php-ffap-locate)))

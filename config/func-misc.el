@@ -194,11 +194,35 @@ backup file name and revert to it"
     (perform-replace "[\"']?,\\s-?[\"']?" "\t" nil t nil nil nil beg
                      end)))
 ;; html-preview-region
+;;;###autoload
 (defun ywb-html-preview-region (beg end)
   (interactive "r")
   (let ((file (make-temp-file "region-" nil ".html")))
     (write-region beg end file)
     (browse-url file)))
+
+;;;###autoload
+(defun ywb-html-escape-region (beg end)
+  "perform html special chars escape in region"
+  (interactive "r")
+  (let ((repl '(("<" . "&lt;")
+                (">" . "&gt;")
+                ("&" . "&amp;")))
+        (text (buffer-substring beg end)))
+    (with-temp-buffer
+      (insert text)
+      (goto-char (point-min))
+      (while (and (not (eobp))
+                  (re-search-forward "[<>&]" nil t))
+        (replace-match (assoc-default (match-string 0) repl)))
+      (kill-new (buffer-substring (point-min) (point-max)) nil))))
+
+;;;###autoload
+(defun ywb-javascript-string (beg end)
+  "perform convert region to javascript string"
+  (interactive "r")
+  (kill-new (replace-regexp-in-string "\n" "\\n\" + \n\""
+                                      (format "%S" (buffer-substring-no-properties beg end)) nil t) nil))
 
 ;; save macro 
 (defvar ywb-kbd-macro
