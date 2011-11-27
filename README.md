@@ -1,3 +1,6 @@
+Ye Wenbin's Emacs Configuration
+==========
+
 How to install this .emacs?
 ------------------------
 
@@ -9,3 +12,4 @@ How to install eim?
 --------------------
 
     curl https://raw.github.com/wenbinye/dot-emacs/master/install/eim-run.sh | sh
+
