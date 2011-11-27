@@ -8,7 +8,4 @@ If the ~/.emacs already exists, delete it. Because we use ~/.emacs.d/init.el as 
 How to install eim?
 --------------------
 
-    cd /tmp
-    git clone https://github.com/wenbinye/emacs-eim.git
-    cd emacs-eim
-    make install ELISPDIR=$HOME/.emacs.d/site-lisp/eim
+    curl https://raw.github.com/wenbinye/dot-emacs/master/install/eim-run.sh | sh
