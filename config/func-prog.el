@@ -64,6 +64,18 @@ With prefix argument, if not found create the file."
   (setq skeleton-pair (not skeleton-pair)))
 ;;}}}
 
+(defun ywb-url-hexify-region (beg end)
+  (interactive "r")
+  (let ((str (url-hexify-string (buffer-substring beg end))))
+    (delete-region beg end)
+    (insert str)))
+
+(defun ywb-url-unhex-region (beg end)
+  (interactive "r")
+  (let ((str (url-unhex-string (buffer-substring beg end))))
+    (delete-region beg end)
+    (insert str)))
+
 (defun ywb-html-insert-newline ()
   (interactive)
   (insert "<br />"))

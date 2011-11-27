@@ -217,11 +217,12 @@ With argument, position cursor at end of buffer."
     (setq c-basic-offset 4))
   (add-hook 'java-mode-hook 'my-java-mode-hook))
 
-(deh-section "js2"
+(deh-section "javascript"
   (autoload 'inferior-moz-switch-to-mozilla "moz" "MozRepl inferior mode" t)
+  (add-hook 'js-mode-hook 'moz-minor-mode)
+  (add-hook 'inferior-moz-hook 'pabbrev-mode)
   (defun my-js2-mode-hook ()
-    (setq forward-sexp-function nil)
-    )
+    (setq forward-sexp-function nil))
   (add-hook 'js2-mode-hook 'my-js2-mode-hook))
 
 (deh-section "hla"
@@ -280,6 +281,8 @@ With argument, position cursor at end of buffer."
   )
 
 (deh-section "autoloads"
+  (autoload 'rpm-spec-mode "rpm-spec-mode" nil t)
+  (autoload 'edit-server-start "edit-server" nil t)
   (autoload 'pabbrev-mode "pabbrev" nil t)
   (autoload 'svn-status "psvn" nil t)
   (autoload 'js2-mode "js2-mode" "" t)
@@ -304,6 +307,10 @@ With argument, position cursor at end of buffer."
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
+  (add-to-list 'auto-mode-alist '("/\\(templates\\|views\\)/.*\.php$" . html-mode))
+  (add-to-list 'auto-mode-alist '("\\.md$" . rst-mode))
+  (add-to-list 'auto-mode-alist '("\\.wiki$" . trac-wiki-mode))
+  (add-to-list 'auto-mode-alist '("\\.spec$" . rpm-spec-mode))
   (add-to-list 'auto-mode-alist '("\\.json?$" . js-mode))
   (add-to-list 'auto-mode-alist '("\\.pkg?$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.proc?$" . sql-mode))
@@ -383,6 +390,19 @@ With argument, position cursor at end of buffer."
       (set (make-local-variable 'eldoc-documentation-function)
            'php-doc-eldoc-function)
       (eldoc-mode 1))
+    ;; Fix php array indentation
+    (defun ywb-php-lineup-arglist-intro (langelem)
+      (save-excursion
+        (goto-char (cdr langelem))
+        (vector (+ (current-column) c-basic-offset))))
+    (defun ywb-php-lineup-arglist-close (langelem)
+      (save-excursion
+        (goto-char (cdr langelem))
+        (vector (current-column))))
+    (c-set-offset 'arglist-intro 'ywb-php-lineup-arglist-intro)
+    (c-set-offset 'arglist-close 'ywb-php-lineup-arglist-close)
+    (c-set-offset 'knr-argdecl 'c-lineup-dont-change)
+
     (deh-require 'simpletest)
     (when (featurep 'simpletest)
       (simpletest-mode 1)

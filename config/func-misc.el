@@ -555,3 +555,13 @@ that your video hardware might not support 50-line mode."
   "Major mode for editing asciidoc file"
   (setq outline-regexp "[=\f]+")
   )
+
+ ;;;###autoload
+(defun ywb-show-color (color)
+  "Display web color (#f0f0f0) in minibuffer"
+  (interactive (list (thing-at-point 'word)))
+  (when (string-match "^[0-9a-f]\\{3,6\\}$" color)
+    (if (< (length color) 6)
+        (setq color (mapconcat 'char-to-string (apply 'append (mapcar (lambda(c) (list c c)) (append color nil))) "")))
+    (put-text-property 0 6 'face (cons 'background-color (concat "#" color)) color)
+    (message color)))
