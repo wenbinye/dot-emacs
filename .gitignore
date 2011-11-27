@@ -6,3 +6,7 @@ backup/
 _*
 .*
 clibpc-symbols.el
+abbrev_defs
+php-doc
+tramp
+wbx-history
