@@ -1,4 +1,4 @@
-REPO=git@github.com/wenbinye
+REPO=git@github.com:wenbinye
 
 cd $HOME
 git clone $REPO/dot-emacs.git .emacs.d
