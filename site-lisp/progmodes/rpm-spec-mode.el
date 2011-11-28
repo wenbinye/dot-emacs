@@ -54,7 +54,7 @@
 ;; Put this in your .emacs file to enable autoloading of rpm-spec-mode,
 ;; and auto-recognition of ".spec" files:
 ;;
-;;  (autoload 'rpm-spec-mode "rpm-spec-mode.el" "RPM spec mode." t)
+;;  
 ;;  (setq auto-mode-alist (append '(("\\.spec" . rpm-spec-mode))
 ;;                                auto-mode-alist))
 ;;------------------------------------------------------------
@@ -602,8 +602,8 @@ with no args, if that value is non-nil."
   (interactive "sChange log entry: ")
   (save-excursion
     (rpm-goto-section "changelog")
-    (let* ((address (or rpm-spec-user-mail-address (user-mail-address)))
-           (fullname (or rpm-spec-user-full-name (user-full-name)))
+    (let* ((address (or rpm-spec-user-mail-address user-mail-address))
+           (fullname (or rpm-spec-user-full-name user-full-name))
            (string (concat "* " (substring (current-time-string) 0 11)
                            (substring (current-time-string) -4) " "
                            fullname " <" address ">"
