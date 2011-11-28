@@ -525,7 +525,7 @@
     "Major mode for translators to edit PO files" t)
 
   (autoload 'yaml-mode "yaml-mode" "Simple mode to edit YAML." t)
-  (autoload 'muse-insert-list-item "muse-mode" t)
+  ;; (autoload 'muse-insert-list-item "muse-mode" t)
   (deh-section "oddmuse"
     (autoload 'oddmuse-mode "oddmuse" "" t)
     (add-hook 'oddmuse-mode-hook
@@ -617,10 +617,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;; Extra library ;;;;;;;;;;;;;;;;;;
 ;; Tricks to load feature when needed
-(defun muse-mode ()
-  (require 'muse-init)
-  (muse-mode-choose-mode))
-(autoload 'muse-tree "muse-init" "" t)
+;; (defun muse-mode ()
+;;   (require 'muse-init)
+;;   (muse-mode-choose-mode))
+;; (autoload 'muse-tree "muse-init" "" t)
 
 (defun emms ()
   (interactive)

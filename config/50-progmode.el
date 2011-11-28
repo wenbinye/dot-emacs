@@ -304,11 +304,12 @@ With argument, position cursor at end of buffer."
   (autoload 'acd-mode "acd" "Major mode to edit acd files" t)
   (autoload 'sourcepair-load "sourcepair" nil t)
   (autoload 'js2-mode "js2" nil t)
+  (autoload 'markdown-mode "markdown-mode" nil t)
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
   (add-to-list 'auto-mode-alist '("/\\(templates\\|views\\)/.*\.php$" . html-mode))
-  (add-to-list 'auto-mode-alist '("\\.md$" . rst-mode))
+  (add-to-list 'auto-mode-alist '("\\.md$" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.wiki$" . trac-wiki-mode))
   (add-to-list 'auto-mode-alist '("\\.spec$" . rpm-spec-mode))
   (add-to-list 'auto-mode-alist '("\\.json?$" . js-mode))
@@ -337,7 +338,7 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.pod$" . pod-mode))
   (add-to-list 'auto-mode-alist '("\\.pir$" . pir-mode))
   (add-to-list 'auto-mode-alist '("\\.xs$" . xs-mode))
-  (add-to-list 'auto-mode-alist '("\\.muse$" . muse-mode))
+  ;; (add-to-list 'auto-mode-alist '("\\.muse$" . muse-mode))
   (add-to-list 'auto-mode-alist '("\\.twiki$" . oddmuse-mode)))
 
 (deh-section "php"
