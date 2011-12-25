@@ -34,6 +34,8 @@
 ;; 滚动边界
 (setq scroll-margin 0
       scroll-conservatively 10000)
+(tool-bar-mode nil)
+(scroll-bar-mode nil)
 ;; 显示括号匹配, 而不是跳到另一个括号
 (show-paren-mode t)
 (setq show-paren-style 'parentheses)

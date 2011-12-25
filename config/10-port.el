@@ -162,5 +162,5 @@
   (when (= emacs-major-version 23)
     (require 'fenc nil t)
     (when (eq window-system 'x)
-      (load (expand-file-name "my-fontset.el" ywb-config-dir)))
-    ))
+      ; (load (expand-file-name "my-fontset.el" ywb-config-dir))
+      )))
