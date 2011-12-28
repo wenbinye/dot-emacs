@@ -197,6 +197,7 @@ When called interactivity, a prefix argument will cause it to be verbose.
 										 :name "edit-server"
 										 :buffer edit-server-process-buffer-name
 										 :family 'ipv4
+										 :coding 'utf-8
 										 :host (if edit-server-host
 															 edit-server-host
 														 'local)
