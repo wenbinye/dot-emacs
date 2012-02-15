@@ -11,6 +11,7 @@
     ((kbd "C-2")   . 'set-mark-command)
     ("\C-m"        . 'newline-and-indent)
     ("\C-j"        . 'newline)
+    ("\M-\\"       . 'comment-dwim)  ; 终端下 C-; 无效
     ("\M-f"        . 'ywb-camelcase-forward-word)  
     ("\M-b"        . 'ywb-camelcase-backward-word)
     ((kbd "C-`")   . 'ywb-toggle-case-dwim)
