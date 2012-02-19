@@ -1,6 +1,6 @@
 [submodule "site-lisp/pde"]
 	path = site-lisp/pde
-	url = ../pde.git/
+	url = git://github.com/wenbinye/emacs-pde.git
 [submodule "site-lisp/eim"]
 	path = site-lisp/eim
-	url = ../eim.git/
+	url = git://github.com/wenbinye/emacs-eim.git
