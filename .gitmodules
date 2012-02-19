@@ -1,0 +1,6 @@
+[submodule "site-lisp/pde"]
+	path = site-lisp/pde
+	url = ../pde.git/
+[submodule "site-lisp/eim"]
+	path = site-lisp/eim
+	url = ../eim.git/
