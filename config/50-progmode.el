@@ -304,10 +304,14 @@ With argument, position cursor at end of buffer."
   (autoload 'acd-mode "acd" "Major mode to edit acd files" t)
   (autoload 'sourcepair-load "sourcepair" nil t)
   (autoload 'js2-mode "js2" nil t)
+  (autoload 'trac-wiki-mode "trac-wiki" nil t)
   (autoload 'markdown-mode "markdown-mode" nil t)
+  (autoload 'coffee-mode "coffee-mode" "Major mode for editing CoffeeScript." t nil)
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
+  (add-to-list 'auto-mode-alist '("\\.coffee$" . coffee-mode))
+  (add-to-list 'auto-mode-alist '("Cakefile" . coffee-mode))
   (add-to-list 'auto-mode-alist '("/\\(templates\\|views\\)/.*\.php$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.md$" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.wiki$" . trac-wiki-mode))
