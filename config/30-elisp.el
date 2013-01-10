@@ -606,10 +606,6 @@
       (global-set-key ";" 'eim-insert-ascii)))
 
   ;; (autoload 'hexl-mode "hexl+" "Edit a file in a hex dump format" t)
-  (deh-section "mule-menu"
-    (require 'english-menu nil t)
-    (require 'chinese-menu nil t)
-    (require 'mule-menu nil t))
   (deh-section "dot-emacs-helper"
     (setq deh-custom-file "~/.emacs.d/config/110-deh.el"))
   )

@@ -309,6 +309,7 @@ With argument, position cursor at end of buffer."
   (autoload 'sws-mode "Major mode for editing significant whitespace files" nil t)
   (autoload 'jade-mode "Major mode for editing jade node.js templates" nil t)
   (autoload 'coffee-mode "coffee-mode" "Major mode for editing CoffeeScript." t nil)
+  (autoload 'nginx-mode "nginx-mode" "Major mode for editing nginx configuration files." nil t)
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"

@@ -46,7 +46,7 @@
                             (if (null (cdr files))
                                 (car files)
                               (directory-file-name
-                               default-directory))) ".tgz"))
+                               default-directory))) ".tar.gz"))
             proc)
         (setq cfile
               (read-from-minibuffer "Compress file name: " cfile))
