@@ -80,3 +80,7 @@
                      'glade-mode-eldoc-func)
                 (eldoc-mode 1)))))
 
+(deh-section "lua"
+  (defun ywb-lua-mode-hook()
+    (local-set-key "\C-c\C-r" 'lua-send-region))
+  (add-hook 'lua-mode-hook 'ywb-lua-mode-hook))

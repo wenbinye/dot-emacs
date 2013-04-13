@@ -305,6 +305,7 @@ With argument, position cursor at end of buffer."
   (autoload 'sourcepair-load "sourcepair" nil t)
   (autoload 'js2-mode "js2" nil t)
   (autoload 'markdown-mode "markdown-mode" nil t)
+  (autoload 'thrift-mode "thrift-mode" nil t)
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
@@ -339,6 +340,7 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.pir$" . pir-mode))
   (add-to-list 'auto-mode-alist '("\\.xs$" . xs-mode))
   ;; (add-to-list 'auto-mode-alist '("\\.muse$" . muse-mode))
+  (add-to-list 'auto-mode-alist '("\\.thrift" . thrift-mode))
   (add-to-list 'auto-mode-alist '("\\.twiki$" . oddmuse-mode)))
 
 (deh-section "php"
