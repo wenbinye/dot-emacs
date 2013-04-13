@@ -1,7 +1,5 @@
 config/01-my-custom.el
 config/100-loaddefs.el
-site-lisp/pde/
-site-lisp/eim/
 backup/
 _*
 .*
