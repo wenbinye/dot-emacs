@@ -763,4 +763,11 @@ If the flag is set, only complete with local files."
   (setq weblogger-server-username "ywb"
         weblogger-server-password "iu4tko97"
         weblogger-server-url "http://tuanba.net/cgi-bin/mt/mt-xmlrpc.cgi"))
-      
+
+(deh-section "el-get"
+  (add-to-list 'load-path "~/.emacs.d/el-get/el-get")
+  (autoload 'el-get-install "el-get" "install elisp package" t)
+  (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
+  (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
+  (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))  
+  )

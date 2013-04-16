@@ -1,6 +1,7 @@
 config/01-my-custom.el
 config/100-loaddefs.el
 backup/
+el-get/
 _*
 .*
 clibpc-symbols.el

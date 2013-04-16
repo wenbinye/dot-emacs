@@ -1,6 +1,6 @@
 ;; -*- mode: Emacs-Lisp -*-
 ;;{{{ etags, hideshow, tree-imenu, smart-compile
-(add-to-list 'load-path (expand-file-name "pde" ywb-startup-dir))
+(add-to-list 'load-path (expand-file-name "pde/lisp" ywb-startup-dir))
 (deh-require 'pde-load)
 
 ;; etags
