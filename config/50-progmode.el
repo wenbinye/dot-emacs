@@ -306,6 +306,7 @@ With argument, position cursor at end of buffer."
   (autoload 'js2-mode "js2" nil t)
   (autoload 'trac-wiki-mode "trac-wiki" nil t)
   (autoload 'markdown-mode "markdown-mode" nil t)
+  (autoload 'thrift-mode "thrift-mode" nil t)
   (autoload 'sws-mode "Major mode for editing significant whitespace files" nil t)
   (autoload 'jade-mode "Major mode for editing jade node.js templates" nil t)
   (autoload 'coffee-mode "coffee-mode" "Major mode for editing CoffeeScript." t nil)
@@ -348,6 +349,7 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.pir$" . pir-mode))
   (add-to-list 'auto-mode-alist '("\\.xs$" . xs-mode))
   ;; (add-to-list 'auto-mode-alist '("\\.muse$" . muse-mode))
+  (add-to-list 'auto-mode-alist '("\\.thrift" . thrift-mode))
   (add-to-list 'auto-mode-alist '("\\.twiki$" . oddmuse-mode)))
 
 (deh-section "php"
