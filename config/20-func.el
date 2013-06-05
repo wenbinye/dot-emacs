@@ -343,3 +343,33 @@
   nil
   '("\\.vim\\'")
   nil)
+
+(defun ywb-impress-fix-xy ()
+  "fix data-x and data-y"
+  (interactive)
+  (let ((point-gen (ywb-impress-xy-generator)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "\\(<section[^>]*class=\"step[^>]*?\\)data-x=\"[-0-9]+\"\\s-+data-y=\"[-0-9]+\"" nil t)
+        (let ((point (funcall point-gen)))
+          (replace-match (concat "\\1data-x=\"" (number-to-string (car point))
+                                 "\" data-y=\"" (number-to-string (cdr point)) "\"")))))))
+
+(defun ywb-impress-xy-generator ()
+  (lexical-let ((x 0)
+                (y 1000)
+                (flag t)
+                (step 1000)
+                (max-x 2000))
+    (function
+     (lambda ()
+       (if (>= (abs x) max-x)
+           (if flag
+               (progn
+                 (setq y (+ y (abs step)))
+                 (setq flag nil))
+             (setq flag t)
+             (setq step (- step))
+             (setq x (+ x step)))
+         (setq x (+ x step)))
+       (cons x y)))))
