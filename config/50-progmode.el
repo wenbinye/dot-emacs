@@ -1,6 +1,6 @@
 ;; -*- mode: Emacs-Lisp -*-
 ;;{{{ etags, hideshow, tree-imenu, smart-compile
-(add-to-list 'load-path (expand-file-name "pde/lisp" ywb-startup-dir))
+(add-to-list 'load-path (expand-file-name "pde/lisp" ywb-site-lisp-dir))
 (deh-require 'pde-load)
 
 ;; etags
@@ -318,15 +318,13 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.jade$" . jade-mode))
   (add-to-list 'auto-mode-alist '("\\.coffee$" . coffee-mode))
   (add-to-list 'auto-mode-alist '("Cakefile" . coffee-mode))
-  (add-to-list 'auto-mode-alist '("/\\(templates\\|views\\)/.*\.php$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.md$" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.wiki$" . trac-wiki-mode))
   (add-to-list 'auto-mode-alist '("\\.spec$" . rpm-spec-mode))
   (add-to-list 'auto-mode-alist '("\\.json?$" . js-mode))
-  (add-to-list 'auto-mode-alist '("\\.pkg?$" . html-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\(pkg?\\|tt2\\|phtml\\)$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.proc?$" . sql-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(ya?ml\\|fb\\)$" . yaml-mode))
-  (add-to-list 'auto-mode-alist '("\\.tt2?$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.acd$" . acd-mode))
   (add-to-list 'auto-mode-alist '("\\.po\\'\\|\\.po\\." . po-mode))
   (add-to-list 'auto-mode-alist '("\\.i\\'" . swig-mode))
@@ -334,7 +332,7 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.cls$" . LaTeX-mode))
   (add-to-list 'auto-mode-alist '("\\.css$" . css-mode))
   (add-to-list 'auto-mode-alist '("\\.js$" . js-mode))
-  (add-to-list 'auto-mode-alist '("\\.\\(php[345]?\\|module\\|phtml\\|inc\\)$" . php-mode))
+  (add-to-list 'auto-mode-alist '("/\\(templates\\|views\\)/.*\.php$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.gp$" . gnuplot-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(hla\\|hhf\\)$" . hla-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(frm\\|bas\\)$" . visual-basic-mode))
@@ -342,7 +340,6 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
   (add-to-list 'auto-mode-alist '("apache2?/access" . apache-log-generic-mode))
   (add-to-list 'auto-mode-alist '("\\.fa\\|\\.gb\\|\\.embl$" . dna-mode))
-  (add-to-list 'auto-mode-alist '("\.schemas" . xml-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(p6\\|tdy\\|cgi\\|t\\)$" . perl-mode))
   (add-to-list 'auto-mode-alist '("\\.xs$" . c-mode))
   (add-to-list 'auto-mode-alist '("\\.pod$" . pod-mode))
