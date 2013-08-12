@@ -18,10 +18,8 @@
                                 'string-match)
                  'find-file) file))
   (setq org-file-apps-defaults-gnu '((t . emacs)))
-  (org-remember-insinuate)
   (setq org-remember-templates
         '(("Todo" ?t "* TODO %?\n  %i\n  %a" "~/org/TODO.org" "Tasks")
           ("Journal" ?j "* %U %?\n\n  %i\n  %a" "~/org/JOURNAL.org")
           ("Idea" ?i "* %^{Title}\n  %i\n  %a" "~/org/JOURNAL.org" "New Ideas")
-          ("Diary" ?d "* %t %^{天气}\n %i\n" "~/org/Daily.org")))
-  )
+          ("Diary" ?d "* %t %^{天气}\n %i\n" "~/org/Daily.org"))))

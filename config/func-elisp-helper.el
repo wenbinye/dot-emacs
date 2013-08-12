@@ -97,14 +97,8 @@
 (defun ywb-generate-loaddefs ()
   (interactive)
   (require 'autoload)
-  (with-temp-buffer
-    (dolist (file
-             (append
-              (directory-files ywb-config-dir t "func-.*.el$")
-              (directory-files (expand-file-name "contrib" ywb-site-lisp-dir) t ".*.el$")))
-      (unless (file-directory-p file)
-        (generate-file-autoloads file)))
-    (write-region (point-min) (point-max) "~/.emacs.d/config/100-loaddefs.el")))
+  (let ((generated-autoload-file (expand-file-name "100-loaddefs.el" ywb-config-dir)))
+    (update-directory-autoloads ywb-config-dir (expand-file-name "contrib" ywb-site-lisp-dir))))
 
 (defmacro my (&rest args)
   `(mapc 'make-local-variable ',args))

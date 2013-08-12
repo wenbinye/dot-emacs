@@ -246,7 +246,6 @@
   (add-hook 'after-init-hook 'session-initialize))
 
 (deh-section "std-lib"
-  (partial-completion-mode 1)
   (icomplete-mode 1)
   (winner-mode 1)
   ;; (auto-insert-mode 1)
