@@ -353,6 +353,42 @@ With argument, position cursor at end of buffer."
   (add-to-list 'interpreter-mode-alist '("php" . php-mode))
   (autoload 'geben "geben" "" t)
 
+(defun ywb-php-generate-getters-setters ()
+  (interactive)
+  (let ((prop-re "\\(?:protected\\|private\\)\\s-+\\$\\([_a-zA-Z][a-zA-Z0-9_]+\\)")
+        (method-re "public\\s-+function\\s-+get\\([a-zA-Z0-9_]+\\)")
+        (indent "    ")
+        exists-getters props name)
+    (save-excursion
+      (save-restriction
+        (if (and mark-active transient-mark-mode)
+            (narrow-to-region begin end))
+        (goto-char (point-min))
+        (while (re-search-forward prop-re nil t)
+          (setq props (cons (match-string 1) props)))
+        (widen)
+        (goto-char (point-min))
+        (while (re-search-forward method-re nil t)
+          (add-to-list 'exists-getters (cons (match-string 1) t)))))
+    (with-temp-buffer
+      (dolist (prop (nreverse props))
+        (setq name (ywb-php-normalize-prop prop))
+        (when (not (assoc (upcase-initials name) exists-getters))
+          (insert "\n")
+          (insert indent "public function get" (upcase-initials name) "()\n"
+                  indent "{\n"
+                  indent indent "return $this->" prop ";\n"
+                  indent "}\n\n")
+          (insert indent "public function set" (upcase-initials name) "($" name ")\n"
+                  indent "{\n"
+                  indent indent "$this->" prop " = $" name ";\n"
+                  indent "}\n")))
+      (kill-new (buffer-string)))))
+
+(defun ywb-php-normalize-prop (prop)
+  (let ((name (mapconcat 'upcase-initials (split-string prop "_") "")))
+    (concat (downcase (substring name 0 1)) (substring name 1))))
+
 (defun my-geben-open-current-file ()
   (interactive)
   (let ((bufs (buffer-list))
