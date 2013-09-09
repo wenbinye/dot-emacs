@@ -1,6 +1,6 @@
 ;;; w3m-cookie.el --- Functions for cookie processing
 
-;; Copyright (C) 2002, 2003, 2005, 2006
+;; Copyright (C) 2002, 2003, 2005, 2006, 2008, 2009, 2010
 ;; TSUCHIYA Masatoshi <tsuchiya@namazu.org>
 
 ;; Authors: Teranishi Yuuichi  <teranisi@gohome.org>
@@ -19,9 +19,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, you can either send email to this
-;; program's maintainer or write to: The Free Software Foundation,
-;; Inc.; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Commentary:
 
@@ -76,6 +76,11 @@ If ask, ask user whether accept bad cookies or not."
 	  (const :tag "Ask accepting bad cookies" ask)
 	  (const :tag "Always accept bad cookies" t)))
 
+(defcustom w3m-cookie-save-cookies t
+  "*Non-nil means save cookies when emacs-w3m cookie system shutdown."
+  :group 'w3m
+  :type 'boolean)
+
 (defcustom w3m-cookie-file
   (expand-file-name ".cookie" w3m-profile-directory)
   "File in which cookies are kept."
@@ -102,7 +107,7 @@ If ask, ask user whether accept bad cookies or not."
 (defmacro w3m-cookie-ignore (cookie)
   `(aref ,cookie 8))
 
-(defsubst w3m-cookie-create (&rest args)
+(defun w3m-cookie-create (&rest args)
   (let ((cookie (make-vector 9 nil)))
     (setf (w3m-cookie-url cookie)     (plist-get args :url))
     (setf (w3m-cookie-domain cookie)  (plist-get args :domain))
@@ -217,52 +222,46 @@ If ask, ask user whether accept bad cookies or not."
 (modify-syntax-entry ?} ")" w3m-cookie-parse-args-syntax-table)
 
 (defun w3m-cookie-parse-args (str &optional nodowncase)
-  (let (name value results name-pos val-pos st nd)
-    (save-excursion
-      (save-restriction
-	(set-buffer (get-buffer-create " *w3m-cookie-parse-temp*"))
-	(set-syntax-table w3m-cookie-parse-args-syntax-table)
-	(erase-buffer)
-	(insert str)
-	(setq st (point-min)
-	      nd (point-max))
-	(set-syntax-table w3m-cookie-parse-args-syntax-table)
-	(narrow-to-region st nd)
-	(goto-char (point-min))
-	(while (not (eobp))
-	  (skip-chars-forward "; \n\t")
-	  (setq name-pos (point))
-	  (skip-chars-forward "^ \n\t=;")
-	  (if (not nodowncase)
-	      (downcase-region name-pos (point)))
-	  (setq name (buffer-substring name-pos (point)))
-	  (skip-chars-forward " \t\n")
-	  (if (/= (or (char-after (point)) 0)  ?=) ; There is no value
-	      (setq value nil)
-	    (skip-chars-forward " \t\n=")
-	    (setq val-pos (point)
-		  value
-		  (cond
-		   ((or (= (or (char-after val-pos) 0) ?\")
-			(= (or (char-after val-pos) 0) ?'))
-		    (buffer-substring (1+ val-pos)
-				      (condition-case ()
-					  (prog2
-					      (forward-sexp 1)
-					      (1- (point))
-					    (skip-chars-forward "\""))
-					(error
-					 (skip-chars-forward "^ \t\n")
-					 (point)))))
-		   (t
-		    (buffer-substring val-pos
-				      (progn
-					(skip-chars-forward "^;")
-					(skip-chars-backward " \t")
-					(point)))))))
-	  (setq results (cons (cons name value) results))
-	  (skip-chars-forward "; \n\t"))
-	results))))
+  (let (name value results name-pos val-pos)
+    (with-current-buffer (get-buffer-create " *w3m-cookie-parse-temp*")
+      (erase-buffer)
+      (set-syntax-table w3m-cookie-parse-args-syntax-table)
+      (insert str)
+      (goto-char (point-min))
+      (while (not (eobp))
+	(skip-chars-forward "; \n\t")
+	(setq name-pos (point))
+	(skip-chars-forward "^ \n\t=;")
+	(unless nodowncase
+	  (downcase-region name-pos (point)))
+	(setq name (buffer-substring name-pos (point)))
+	(skip-chars-forward " \t\n")
+	(if (/= (or (char-after (point)) 0)  ?=) ; There is no value
+	    (setq value nil)
+	  (skip-chars-forward " \t\n=")
+	  (setq val-pos (point)
+		value
+		(cond
+		 ((or (= (or (char-after val-pos) 0) ?\")
+		      (= (or (char-after val-pos) 0) ?'))
+		  (buffer-substring (1+ val-pos)
+				    (condition-case ()
+					(prog2
+					    (forward-sexp 1)
+					    (1- (point))
+					  (skip-chars-forward "\""))
+				      (error
+				       (skip-chars-forward "^ \t\n")
+				       (point)))))
+		 (t
+		  (buffer-substring val-pos
+				    (progn
+				      (skip-chars-forward "^;")
+				      (skip-chars-backward " \t")
+				      (point)))))))
+	(push (cons name value) results)
+	(skip-chars-forward "; \n\t"))
+      results)))
 
 (defun w3m-cookie-trusted-host-p (host)
   "Returns non-nil when the HOST is specified as trusted by user."
@@ -292,7 +291,7 @@ If ask, ask user whether accept bad cookies or not."
        ((eq (string-to-char (car reject)) ?.)
 	(setq regexp (concat (regexp-quote (car reject)) "$")))
        (t (setq regexp (concat "^" (regexp-quote (car reject)) "$"))))
-      (when (string-match (concat regexp "$") host)
+      (when (string-match regexp host)
 	(setq rlen (length (car reject))
 	      reject nil))
       (pop reject))
@@ -413,16 +412,28 @@ If ask, ask user whether accept bad cookies or not."
   "Clear cookie list."
   (setq w3m-cookies nil))
 
-(defun w3m-cookie-save ()
-  "Save cookies."
+(defun w3m-cookie-save (&optional domain)
+  "Save cookies.
+When DOMAIN is non-nil, only save cookies whose domains match it."
+  (interactive)
   (let (cookies)
     (dolist (cookie w3m-cookies)
-      (when (and (w3m-cookie-expires cookie)
+      (when (and (or (not domain)
+		     (string= (w3m-cookie-domain cookie) domain))
+		 (w3m-cookie-expires cookie)
 		 (w3m-time-newer-p (w3m-time-parse-string
 				    (w3m-cookie-expires cookie))
 				   (current-time)))
 	(push cookie cookies)))
     (w3m-save-list w3m-cookie-file cookies)))
+
+(defun w3m-cookie-save-current-site-cookies ()
+  "Save cookies for the current site."
+  (interactive)
+  (when (and w3m-current-url
+	     (not (w3m-url-local-p w3m-current-url)))
+    (w3m-string-match-url-components w3m-current-url)
+    (w3m-cookie-save (match-string 4 w3m-current-url))))
 
 (defun w3m-cookie-load ()
   "Load cookies."
@@ -439,9 +450,10 @@ If ask, ask user whether accept bad cookies or not."
 
 ;;;###autoload
 (defun w3m-cookie-shutdown ()
-  "Save cookies."
+  "Save cookies, and reset cookies' data."
   (interactive)
-  (w3m-cookie-save)
+  (when w3m-cookie-save-cookies
+    (w3m-cookie-save))
   (setq w3m-cookie-init nil)
   (w3m-cookie-clear)
   (if (get-buffer " *w3m-cookie-parse-temp*")

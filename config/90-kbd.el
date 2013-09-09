@@ -48,7 +48,7 @@
     ("c" . 'ctl-cc-map)
     ("d" . 'dirtree-show)
     ("e" . 'ctl-ce-map)
-    ("f" . 'comint-dynamic-complete)
+    ("f" . 'comint-dynamic-complete-filename)
     ("g" . 'fold-dwim-hide-all)
     ("h" . 'help-dwim)
     ("i" . 'imenu)

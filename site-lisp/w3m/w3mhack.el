@@ -1,6 +1,6 @@
 ;;; w3mhack.el --- a hack to setup the environment for building w3m
 
-;; Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007
+;; Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
 ;; TSUCHIYA Masatoshi <tsuchiya@namazu.org>
 
 ;; Author: Katsumi Yamaoka <yamaoka@jpl.org>
@@ -76,8 +76,7 @@ but do not execute them.")
 (let ((test (lambda (shell)
 	      (let ((buffer (generate-new-buffer " *temp*"))
 		    (msg "Hello World"))
-		(save-excursion
-		  (set-buffer buffer)
+		(with-current-buffer buffer
 		  (condition-case nil
 		      (call-process shell nil t nil "-c"
 				    (concat "MESSAGE=\"" msg "\"&&"
@@ -295,7 +294,24 @@ Error: You have to install APEL before building emacs-w3m, see manuals.
 		   (copy-sequence version-specific-modules))))
 	 (shimbun-dir (file-name-as-directory shimbun-module-directory))
 	 print-level print-length)
-    (unless (locate-library "mew")
+    ;; Exclude very old Mew XEmacs package.
+    (unless
+	(if (featurep 'xemacs)
+	    (let ((el (locate-library "mew"))
+		  pkg)
+	      (and el
+		   (if (file-exists-p (setq pkg (expand-file-name
+						 "_pkg.el"
+						 (file-name-directory el))))
+		       (condition-case nil
+			   (let ((packages-package-list packages-package-list))
+			     (load pkg nil t)
+			     (>= (string-to-number (package-get-key
+						    'mew :author-version))
+				 2))
+			 (error nil))
+		     t)))
+	  (locate-library "mew"))
       (push "mew-w3m.el" ignores))
     (unless (if (featurep 'xemacs)
 		(and (featurep 'mule) (locate-library "pccl"))
@@ -312,7 +328,8 @@ Error: You have to install APEL before building emacs-w3m, see manuals.
 					 nil "^[^#]+\\.el$"))
 	    (setq modules (nconc modules (list (concat shimbun-dir file)))))
 	  ;; mew-shimbun check
-	  (unless (locate-library "mew-nntp")
+	  (when (or (member "mew-w3m.el" ignores)
+		    (not (locate-library "mew-nntp")))
 	    (push (concat shimbun-dir "mew-shimbun.el") ignores))
 	  ;; nnshimbun check
 	  (unless (let ((gnus (locate-library "gnus")))
@@ -325,6 +342,9 @@ Error: You have to install APEL before building emacs-w3m, see manuals.
     (unless (featurep 'mule)
       (push "w3m-weather.el" ignores)
       (push "w3m-symbol.el" ignores))
+    (when (or (featurep 'xemacs)
+	      (< emacs-major-version 23))
+      (push "bookmark-w3m.el" ignores))
     ;; List shimbun modules which cannot be byte-compiled with this system.
     (let (list)
       ;; To byte-compile w3m-util.el and a version specific module first.
@@ -425,13 +445,13 @@ Error: You have to install APEL before building emacs-w3m, see manuals.
 	(lambda (form)
 	  (if (cdr form)
 	      (let ((pos (car (cdr form))))
-		(` (let ((cur (point)))
-		     (prog2
-			 (goto-char (, pos))
-			 (if (bobp)
-			     nil
-			   (preceding-char))
-		       (goto-char cur)))))
+		`(let ((cur (point)))
+		   (prog2
+		       (goto-char ,pos)
+		       (if (bobp)
+			   nil
+			 (preceding-char))
+		     (goto-char cur))))
 	    '(if (bobp)
 		 nil
 	       (preceding-char)))))))
@@ -441,28 +461,28 @@ Error: You have to install APEL before building emacs-w3m, see manuals.
        (let ((num (nth 1 form))
 	     (string (nth 2 form)))
 	 (cond ((and string (featurep 'xemacs))
-		(` (let ((num (, num)))
-		     (if (match-beginning num)
-			 (let ((string (substring (, string)
-						  (match-beginning num)
-						  (match-end num))))
-			   (map-extents (lambda (extent maparg)
-					  (delete-extent extent))
-					string 0 (length string))
-			   string)))))
+		`(let ((num ,num))
+		   (if (match-beginning num)
+		       (let ((string (substring ,string
+						(match-beginning num)
+						(match-end num))))
+			 (map-extents (lambda (extent maparg)
+					(delete-extent extent))
+				      string 0 (length string))
+			 string))))
 	       (string
-		(` (let ((num (, num)))
-		     (if (match-beginning num)
-			 (let ((string (substring (, string)
-						  (match-beginning num)
-						  (match-end num))))
-			   (set-text-properties 0 (length string) nil string)
-			   string)))))
+		`(let ((num ,num))
+		   (if (match-beginning num)
+		       (let ((string (substring ,string
+						(match-beginning num)
+						(match-end num))))
+			 (set-text-properties 0 (length string) nil string)
+			 string))))
 	       (t
-		(` (let ((num (, num)))
-		     (if (match-beginning num)
-			 (buffer-substring-no-properties
-			  (match-beginning num) (match-end num))))))))))
+		`(let ((num ,num))
+		   (if (match-beginning num)
+		       (buffer-substring-no-properties
+			(match-beginning num) (match-end num)))))))))
 
 (cond
  ((featurep 'xemacs)
@@ -540,14 +560,14 @@ to remove some obsolete variables in the first argument VARLIST."
 		    (eq 'length (car-safe end))
 		    (eq string (car-safe (cdr-safe end))))
 	       (if props
-		   (` (let ((end (, end)))
-			(map-extents (lambda (extent maparg)
-				       (delete-extent extent))
-				     (, string) 0 end)
-			(add-text-properties 0 end (, props) (, string))))
-		 (` (map-extents (lambda (extent maparg)
-				   (delete-extent extent))
-				 (, string) 0 (, end))))
+		   `(let ((end ,end))
+		      (map-extents (lambda (extent maparg)
+				     (delete-extent extent))
+				   ,string 0 end)
+		      (add-text-properties 0 end ,props ,string))
+		 `(map-extents (lambda (extent maparg)
+				 (delete-extent extent))
+			       ,string 0 ,end))
 	     form))))
 
   (defun w3mhack-make-package ()
@@ -738,10 +758,6 @@ NOTE: This function must be called from the top directory."
     ;; we need to force it to load the correct one.
     (when texinfmt
       (push (file-name-directory texinfmt) load-path))
-    ;; ptexinfmt.el uses `with-temp-buffer' which is not available in
-    ;; Emacs 19.
-    (unless (fboundp 'with-temp-buffer)
-      (require 'poe))
     (load "doc/ptexinfmt.el" nil t t)
     (cd "doc")
     (if (and (string-match "-ja\\.texi\\'" file)
@@ -757,46 +773,6 @@ NOTE: This function must be called from the top directory."
 	    (when (boundp 'buffer-file-coding-system)
 	      (setq coding-system-for-write
 		    (symbol-value 'buffer-file-coding-system)))
-	    ;; process @include before updating node
-	    ;; This might produce some problem if we use @lowersection or
-	    ;; such.
-	    (let ((input-directory default-directory)
-		  (texinfo-command-end))
-	      (while (re-search-forward "^@include" nil t)
-		(setq texinfo-command-end (point))
-		(let ((filename (concat input-directory
-					(texinfo-parse-line-arg))))
-		  (re-search-backward "^@include")
-		  (delete-region (point) (save-excursion
-					   (forward-line 1)
-					   (point)))
-		  (message "Reading included file: %s" filename)
-		  (save-excursion
-		    (save-restriction
-		      (narrow-to-region
-		       (point) (+ (point)
-				  (car (cdr (insert-file-contents filename)))))
-		      (goto-char (point-min))
-		      ;; Remove `@setfilename' line from included file,
-		      ;; if any, so @setfilename command not duplicated.
-		      (if (re-search-forward "^@setfilename"
-					     (save-excursion
-					       (forward-line 100)
-					       (point))
-					     t)
-			  (progn
-			    (beginning-of-line)
-			    (delete-region (point) (save-excursion
-						     (forward-line 1)
-						     (point))))))))))
-	    ;; Remove ignored areas.
-	    (goto-char (point-min))
-	    (while (re-search-forward "^@ignore[\t\r ]*$" nil t)
-	      (delete-region (match-beginning 0)
-			     (if (re-search-forward
-				  "^@end[\t ]+ignore[\t\r ]*$" nil t)
-				 (1+ (match-end 0))
-			       (point-max))))
 	    ;; Remove unsupported commands.
 	    (goto-char (point-min))
 	    (while (re-search-forward "@\\(?:end \\)?ifnottex" nil t)
@@ -805,7 +781,40 @@ NOTE: This function must be called from the top directory."
 	    (while (search-forward "\n@iflatex\n" nil t)
 	      (delete-region (1+ (match-beginning 0))
 			     (search-forward "\n@end iflatex\n")))
-	    (texinfo-mode)
+	    ;; Insert @include files.
+	    (goto-char (point-min))
+	    (set-syntax-table texinfo-format-syntax-table)
+	    (let (start texinfo-command-end filename)
+	      (while (re-search-forward "^@include" nil t)
+		(setq start (match-beginning 0)
+		      texinfo-command-end (point)
+		      filename (texinfo-parse-line-arg))
+		(delete-region start (point-at-bol 2))
+		(message "Reading included file: %s" filename)
+		(save-excursion
+		  (save-restriction
+		    (narrow-to-region
+		     (point) (+ (point)
+				(car (cdr (insert-file-contents filename)))))
+		    (goto-char (point-min))
+		    ;; Remove `@setfilename' line from included file, if any,
+		    ;; so @setfilename command not duplicated.
+		    (if (re-search-forward "^@setfilename"
+					   (point-at-eol 100) t)
+			(delete-region (point-at-bol 1) (point-at-bol 2)))))))
+	    ;; Remove ignored areas.
+	    (goto-char (point-min))
+	    (while (re-search-forward "^@ignore[\t\r ]*$" nil t)
+	      (delete-region (match-beginning 0)
+			     (if (re-search-forward
+				  "^@end[\t ]+ignore[\t\r ]*$" nil t)
+				 (1+ (match-end 0))
+			       (point-max))))
+	    ;; Format @key{...}.
+	    (goto-char (point-min))
+	    (while (re-search-forward "@key{\\([^}]+\\)}" nil t)
+	      (replace-match "<\\1>"))
+	    ;;
 	    (texinfo-every-node-update)
 	    (set-buffer-modified-p nil)
 	    (message "texinfo formatting %s..." file)
@@ -815,22 +824,30 @@ NOTE: This function must be called from the top directory."
 	       'message
 	       (cond ((featurep 'mule)
 		      ;; Encode messages to terminal.
-		      (byte-compile
-		       (cond ((featurep 'xemacs)
-			      `(lambda (fmt &rest args)
-				 (unless (and (string-equal fmt "%s clean")
-					      (equal (car args)
-						     buffer-file-name))
+		      (let ((coding
+			     (or (and (boundp 'current-language-environment)
+				      (string-match
+				       "\\`Japanese"
+				       current-language-environment)
+				      (boundp 'locale-coding-system)
+				      locale-coding-system)
+				 'iso-2022-7bit)))
+			(byte-compile
+			 (cond ((featurep 'xemacs)
+				`(lambda (fmt &rest args)
+				   (unless (and (string-equal fmt "%s clean")
+						(equal (car args)
+						       buffer-file-name))
+				     (funcall ,si:message "%s"
+					      (encode-coding-string
+					       (apply 'format fmt args)
+					       ',coding)))))
+			       (t
+				`(lambda (fmt &rest args)
 				   (funcall ,si:message "%s"
 					    (encode-coding-string
 					     (apply 'format fmt args)
-					     'iso-2022-7bit)))))
-			     (t
-			      `(lambda (fmt &rest args)
-				 (funcall ,si:message "%s"
-					  (encode-coding-string
-					   (apply 'format fmt args)
-					   'iso-2022-7bit)))))))
+					     ',coding))))))))
 		     ((featurep 'xemacs)
 		      (byte-compile
 		       `(lambda (fmt &rest args)
@@ -845,7 +862,7 @@ NOTE: This function must be called from the top directory."
 		     `(lambda (&rest args)
 			(apply ,si:push-mark (car args) t (cddr args)))))
 	      (unwind-protect
-		  (texinfo-format-buffer nil)
+		  (texinfo-format-buffer t)
 		(fset 'message si:message)
 		(fset 'push-mark si:push-mark)))
 	    (if (buffer-modified-p)
@@ -867,23 +884,29 @@ NOTE: This function must be called from the top directory."
 
 (defun w3mhack-update-files-autoloads (files)
   "Run `update-file-autoloads' with FILES, silently in XEmacs."
-  (if (featurep 'xemacs)
-      (let ((si:message (symbol-function 'message)))
-	(defun message (fmt &rest args)
-	  "Ignore useless messages while generating autoloads."
-	  (cond ((and (string-equal "Generating autoloads for %s..." fmt)
-		      (file-exists-p (file-name-nondirectory (car args))))
-		 (funcall si:message
-			  fmt (file-name-nondirectory (car args))))
-		((string-equal "No autoloads found in %s" fmt))
-		((string-equal "Generating autoloads for %s...done" fmt))
-		(t (apply si:message fmt args))))
-	(unwind-protect
-	    (dolist (file files)
-	      (update-file-autoloads file))
-	  (fset 'message si:message)))
-    (dolist (file files)
-      (update-file-autoloads file))))
+  (cond ((featurep 'xemacs)
+	 (let ((si:message (symbol-function 'message)))
+	   (defun message (fmt &rest args)
+	     "Ignore useless messages while generating autoloads."
+	     (cond ((and (string-equal "Generating autoloads for %s..." fmt)
+			 (file-exists-p (file-name-nondirectory (car args))))
+		    (funcall si:message
+			     fmt (file-name-nondirectory (car args))))
+		   ((string-equal "No autoloads found in %s" fmt))
+		   ((string-equal "Generating autoloads for %s...done" fmt))
+		   (t (apply si:message fmt args))))
+	   (unwind-protect
+	       (dolist (file files)
+		 (update-file-autoloads file))
+	     (fset 'message si:message))))
+	((boundp 'generated-autoload-load-name)
+	 (dolist (file files)
+	   (let ((generated-autoload-load-name
+		  (file-name-sans-extension (file-name-nondirectory file))))
+	     (update-file-autoloads file))))
+	(t
+	 (dolist (file files)
+	   (update-file-autoloads file)))))
 
 (defun w3mhack-generate-load-file ()
   "Generate a file including all autoload stubs."
@@ -915,8 +938,7 @@ NOTE: This function must be called from the top directory."
 	(message " `%s' is up to date" w3mhack-load-file)
       (when (fboundp 'autoload-ensure-default-file)
 	(autoload-ensure-default-file generated-autoload-file))
-      (save-excursion
-	(set-buffer (find-file-noselect generated-autoload-file))
+      (with-current-buffer (find-file-noselect generated-autoload-file)
 	(if (fboundp 'autoload-ensure-default-file)
 	    (let ((case-fold-search t))
 	      (goto-char (point-min))

@@ -1,6 +1,6 @@
 ;;; w3m-xmas.el --- XEmacs stuff for emacs-w3m
 
-;; Copyright (C) 2001, 2002, 2003, 2004, 2005, 2007
+;; Copyright (C) 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010
 ;; TSUCHIYA Masatoshi <tsuchiya@namazu.org>
 
 ;; Authors: Yuuichi Teranishi  <teranisi@gohome.org>,
@@ -21,9 +21,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, you can either send email to this
-;; program's maintainer or write to: The Free Software Foundation,
-;; Inc.; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 
 ;;; Commentary:
@@ -50,7 +50,6 @@
   (defvar w3m-coding-system)
   (defvar w3m-current-title)
   (defvar w3m-current-url)
-  (defvar w3m-default-coding-system)
   (defvar w3m-display-inline-images)
   (defvar w3m-icon-directory)
   (defvar w3m-menu-on-forefront)
@@ -63,11 +62,14 @@
   (defvar w3m-use-tab-menubar)
   (defvar w3m-work-buffer-name)
   (defvar w3m-work-buffer-list)
+  (defvar w3m-default-coding-system)
+  (defvar w3m-coding-system)
   (autoload 'update-tab-in-gutter "gutter-items")
   (autoload 'w3m-image-type "w3m")
   (autoload 'w3m-retrieve "w3m")
   (autoload 'w3m-setup-tab-menu "w3m-tabmenu")
-  (autoload 'w3m-setup-bookmark-menu "w3m-bookmark"))
+  (autoload 'w3m-setup-bookmark-menu "w3m-bookmark")
+  (autoload 'w3m-setup-session-menu "w3m-session"))
 
 ;; Dummies to shut some XEmacs variants up.
 (eval-when-compile
@@ -83,12 +85,15 @@
 ;;; Handle coding system:
 (eval-when-compile
   (unless (fboundp 'find-coding-system)
-    (defalias 'find-coding-system 'ignore)))
+    (defalias 'find-coding-system 'ignore)
+    (defalias 'coding-system-name 'ignore)))
 
 (defalias 'w3m-find-coding-system
   (if (fboundp 'find-coding-system)
       (lambda (obj)
-	(and obj (find-coding-system obj)))
+	(and obj
+	     (setq obj (find-coding-system obj))
+	     (coding-system-name obj)))
     'ignore))
 
 ;; Under XEmacs 21.5-b6 and later, `make-ccl-coding-system' will
@@ -165,50 +170,75 @@ PRIORITY-LIST is a list of coding systems ordered by priority."
   "Decode the string STR which is encoded in CODING.
 If CODING is a list, look for the coding system using it as a priority
 list."
-  (if (listp coding)
-      (with-temp-buffer
-	(insert str)
-	(let* ((orig-category-list (coding-priority-list))
-	       (orig-category-systems (mapcar #'coding-category-system
-					      orig-category-list))
-	       codesys category priority-list)
-	  (unwind-protect
-	      (progn
-		(while coding
-		  (setq codesys (car coding)
-			coding (cdr coding)
-			category (or (coding-system-category codesys)
-				     (coding-system-name codesys)))
-		  (unless (or (eq (coding-system-type codesys) 'undecided)
-			      (assq category priority-list))
-		    (set-coding-category-system category codesys)
-		    (push category priority-list)))
-		(set-coding-priority-list (nreverse priority-list))
-		;; `detect-coding-region' always returns `undecided'
-		;; ignoring `priority-list' in XEmacs 21.5-b19, but
-		;; that's okay.
-		(when (consp (setq codesys (detect-coding-region
-					    (point-min) (point-max))))
-		  (setq codesys (car codesys)))
-		(decode-coding-region (point-min) (point-max)
-				      (or codesys
-					  w3m-default-coding-system
-					  w3m-coding-system
-					  'iso-2022-7bit))
-		(buffer-string))
-	    (set-coding-priority-list orig-category-list)
-	    (while orig-category-list
-	      (set-coding-category-system (car orig-category-list)
-					  (car orig-category-systems))
-	      (setq orig-category-list (cdr orig-category-list)
-		    orig-category-systems (cdr orig-category-systems))))))
-    (decode-coding-string str coding)))
+  (w3m-static-if (and (fboundp 'find-coding-system)
+		      (subrp (symbol-function 'find-coding-system)))
+      (if (listp coding)
+	  (with-temp-buffer
+	    (insert str)
+	    (let* ((orig-category-list (coding-priority-list))
+		   (orig-category-systems (mapcar #'coding-category-system
+						  orig-category-list))
+		   codesys category priority-list)
+	      (unwind-protect
+		  (progn
+		    (while coding
+		      (setq codesys (car coding)
+			    coding (cdr coding)
+			    category (or (coding-system-category codesys)
+					 (coding-system-name codesys)))
+		      (unless (or (eq (coding-system-type codesys) 'undecided)
+				  (assq category priority-list))
+			(set-coding-category-system category codesys)
+			(push category priority-list)))
+		    (set-coding-priority-list (nreverse priority-list))
+		    ;; `detect-coding-region' always returns `undecided'
+		    ;; ignoring `priority-list' in XEmacs 21.5-b19, but
+		    ;; that's okay.
+		    (when (consp (setq codesys (detect-coding-region
+						(point-min) (point-max))))
+		      (setq codesys (car codesys)))
+		    (decode-coding-region (point-min) (point-max)
+					  (or codesys
+					      w3m-default-coding-system
+					      w3m-coding-system
+					      'iso-2022-7bit))
+		    (buffer-string))
+		(set-coding-priority-list orig-category-list)
+		(while orig-category-list
+		  (set-coding-category-system (car orig-category-list)
+					      (car orig-category-systems))
+		  (setq orig-category-list (cdr orig-category-list)
+			orig-category-systems (cdr orig-category-systems))))))
+	(decode-coding-string str coding))
+    str))
 
-(when (and (not (fboundp 'w3m-ucs-to-char))
-	   (fboundp 'unicode-to-char)
-	   (subrp (symbol-function 'unicode-to-char)))
-  (defun w3m-ucs-to-char (codepoint)
-    (unicode-to-char codepoint)))
+(eval-when-compile (autoload 'ucs-to-char "unicode"))
+
+;; This might be redefined by w3m-ucs.el.
+(cond ((and (fboundp 'unicode-to-char) ;; XEmacs 21.5.
+	    (subrp (symbol-function 'unicode-to-char)))
+       (if (featurep 'mule)
+	   (defalias 'w3m-ucs-to-char 'unicode-to-char)
+	 (defun w3m-ucs-to-char (codepoint)
+	   (or (unicode-to-char codepoint) ?~))))
+      ((featurep 'mule)
+       (defun w3m-ucs-to-char (codepoint)
+	 (if (fboundp 'ucs-to-char) ;; Mule-UCS is loaded.
+	     (progn
+	       (defalias 'w3m-ucs-to-char
+		 (lambda (codepoint)
+		   (condition-case nil
+		       (or (ucs-to-char codepoint) ?~)
+		     (error ?~))))
+	       (w3m-ucs-to-char codepoint))
+	   (condition-case nil
+	       (or (int-to-char codepoint) ?~)
+	     (error ?~)))))
+      (t
+       (defun w3m-ucs-to-char (codepoint)
+	 (condition-case nil
+	     (or (int-to-char codepoint) ?~)
+	   (error ?~)))))
 
 ;;; Handle images:
 
@@ -355,7 +385,7 @@ new glyph image.  See also the documentation for the variable
       ;; Use a cached glyph.
       (cdr cache))))
 
-(defsubst w3m-make-glyph (data type)
+(defun w3m-make-glyph (data type)
   (or (and (eq type 'xbm)
 	   (let (width height content)
 	     (with-temp-buffer
@@ -387,20 +417,26 @@ Third optional argument SIZE is currently ignored."
 		  size)
       (w3m-process-do-with-temp-buffer
 	  (type (condition-case err
-		    (w3m-retrieve url 'raw no-cache nil referer handler)
+		    (w3m-retrieve url nil no-cache nil referer handler)
 		  (error (message "While retrieving %s: %s" url err) nil)))
-	(when type
+	(goto-char (point-min))
+	(when (w3m-image-type-available-p
+	       (setq type
+		     (or (and (let (case-fold-search)
+				(looking-at
+				 "\\(GIF8\\)\\|\\(\377\330\\)\\|\211PNG\r\n"))
+			      (cond ((match-beginning 1) 'gif)
+				    ((match-beginning 2) 'jpeg)
+				    (t 'png)))
+			 (w3m-image-type type))))
 	  (let ((data (buffer-string))
 		glyph)
-	    (setq glyph
-		  (when (w3m-image-type-available-p
-			 (setq type (w3m-image-type type)))
-		    (or (and (eq type 'gif)
-			     (or w3m-should-unoptimize-animated-gifs
-				 w3m-should-convert-interlaced-gifs)
-			     w3m-gifsicle-program
-			     (w3m-fix-gif url data no-cache))
-			(w3m-make-glyph data type))))
+	    (setq glyph (or (and (eq type 'gif)
+				 (or w3m-should-unoptimize-animated-gifs
+				     w3m-should-convert-interlaced-gifs)
+				 w3m-gifsicle-program
+				 (w3m-fix-gif url data no-cache))
+			    (w3m-make-glyph data type)))
 	    (if (and w3m-resize-images set-size)
 		(progn
 		  (setq size (cons (glyph-width glyph)
@@ -441,7 +477,7 @@ and its cdr element is used as height."
 		  (rate rate)
 		  fmt data)
       (w3m-process-do-with-temp-buffer
-	  (type (w3m-retrieve url 'raw nil nil referer handler))
+	  (type (w3m-retrieve url nil nil nil referer handler))
 	(when (w3m-image-type-available-p (setq type (w3m-image-type type)))
 	  (setq data (buffer-string)
 		fmt type)
@@ -603,18 +639,19 @@ otherwise works in all the emacs-w3m buffers."
       (let ((w3m (car (find-menu-item current-menubar '("w3m"))))
 	    (bookmark (car (find-menu-item current-menubar '("Bookmark"))))
 	    (tab (car (find-menu-item current-menubar '("Tab"))))
+	    (session (car (find-menu-item current-menubar '("Session"))))
 	    (items (copy-sequence current-menubar)))
-	(when (or w3m bookmark tab)
-	  (setq items (delq tab (delq bookmark (delq w3m items))))
+	(when (or w3m bookmark tab session)
+	  (setq items (delq session (delq tab (delq bookmark (delq w3m items)))))
 	  (set-buffer-menubar
 	   (cond (arg
-		  (append (delq nil (list w3m bookmark tab)) items))
+		  (append (delq nil (list w3m bookmark tab session)) items))
 		 ((memq nil items)
 		  (append (nreverse (cdr (memq nil (reverse items))))
-			  (delq nil (list w3m bookmark tab))
+			  (delq nil (list w3m bookmark tab session))
 			  (memq nil items)))
 		 (t
-		  (nconc items (delq nil (list w3m bookmark tab))))))))
+		  (nconc items (delq nil (list w3m bookmark tab session))))))))
     (save-current-buffer
       (dolist (buffer (w3m-list-buffers t))
 	(set-buffer buffer)
@@ -625,6 +662,7 @@ otherwise works in all the emacs-w3m buffers."
   (when (and (featurep 'menubar)
 	     current-menubar
 	     (not (assoc (car w3m-menubar) current-menubar)))
+    (w3m-setup-session-menu)
     (when w3m-use-tab-menubar (w3m-setup-tab-menu))
     (w3m-setup-bookmark-menu)
     (set-buffer-menubar (cons w3m-menubar current-menubar))
@@ -703,7 +741,7 @@ It has no effect if your XEmacs does not support the gutter items."
 	 (prog2
 	     (or (boundp 'gutter-buffers-tab-enabled)
 		 (setq value nil))
-	     (set-default symbol value)
+	     (custom-set-default symbol value)
 	   (if value
 	       (add-hook 'w3m-display-functions 'w3m-update-tab-in-gutter)
 	     (remove-hook 'w3m-display-functions 'w3m-update-tab-in-gutter))
@@ -926,8 +964,8 @@ necessarily solve the problem completely."
 	  (epos (point-at-eol))
 	  (buf (window-buffer window)))
       (save-selected-window
-	(save-excursion
-	  (set-buffer buf)
+	(save-excursion ;; Don't replace it with:
+	  (set-buffer buf) ;; (with-current-buffer buf
 	  (beginning-of-line)
 	  (condition-case nil
 	      (forward-char hs)
@@ -956,6 +994,17 @@ necessarily solve the problem completely."
 					(- columns (current-column))))
 	(set-window-hscroll window (- (point) (point-at-bol))))))
   )
+
+(defun w3m-form-coding-system-accept-region-p (&optional from to coding-system)
+  "Check whether `coding-system' can encode specified region."
+  (let ((string (buffer-substring (or from (point-min))
+				  (or to   (point-max)))))
+    (unless (string= (decode-coding-string
+		      (encode-coding-string string coding-system)
+		      coding-system)
+		     string)
+      (message "Warning: this text may cause coding-system problem."))
+    t))
 
 (provide 'w3m-xmas)
 

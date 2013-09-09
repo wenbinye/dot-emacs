@@ -1,6 +1,7 @@
 ;;; w3m-bug.el --- command to report emacs-w3m bugs -*- coding: euc-japan -*-
 
-;; Copyright (C) 2002, 2003, 2005, 2007 TSUCHIYA Masatoshi <tsuchiya@namazu.org>
+;; Copyright (C) 2002, 2003, 2005, 2007, 2010
+;; TSUCHIYA Masatoshi <tsuchiya@namazu.org>
 
 ;; Author: Katsumi Yamaoka <yamaoka@jpl.org>
 ;; Keywords: w3m, WWW, hypermedia
@@ -18,9 +19,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, you can either send email to this
-;; program's maintainer or write to: The Free Software Foundation,
-;; Inc.; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Commentary:
 
@@ -79,7 +80,7 @@ Prompts for bug subject.  Leaves you in a mail buffer."
 	  (buffers (cons buffer (delq buffer (buffer-list))))
 	  (inhibit-point-motion-hooks t)
 	  keymap)
-     (save-excursion
+     (save-current-buffer
        (while buffers
 	 (setq buffer (car buffers)
 	       buffers (cdr buffers))
@@ -109,7 +110,7 @@ Prompts for bug subject.  Leaves you in a mail buffer."
     (insert
      (if (and (boundp 'w3m-language)
 	      (equal (symbol-value 'w3m-language) "Japanese"))
-	 "もし可能なら emacs-w3m を起動してからやり直して下さい。\n"
+	 "もし可能なら emacs-w3m を起動してからやり直してください。\n"
        "It is if possible, please redo after starting emacs-w3m.\n")
      "\
 ================================================================\n"))
@@ -125,12 +126,12 @@ Prompts for bug subject.  Leaves you in a mail buffer."
 あなたのローカルサイトの管理者宛てではありません!!")
 			       (point))
 			     'face 'underline)
-	  (insert "\n\nできるだけ簡潔に述べて下さい:
+	  (insert "\n\nできるだけ簡潔に述べてください:
 \t- 何が起きましたか?
 \t- 本当はどうなるべきだったと思いますか?
 \t- そのとき何をしましたか? (正確に)
 
-もし Lisp のバックトレースがあれば添付して下さい。\n"))
+もし Lisp のバックトレースがあれば添付してください。\n"))
       (insert "\
 This bug report will be sent to the emacs-w3m development team,\n")
       (put-text-property (point)

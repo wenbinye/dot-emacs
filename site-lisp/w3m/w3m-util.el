@@ -1,7 +1,6 @@
 ;;; w3m-util.el --- Utility macros and functions for emacs-w3m
 
-;; Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007
-;; TSUCHIYA Masatoshi <tsuchiya@namazu.org>
+;; Copyright (C) 2001-2011 TSUCHIYA Masatoshi <tsuchiya@namazu.org>
 
 ;; Authors: TSUCHIYA Masatoshi <tsuchiya@namazu.org>,
 ;;          Shun-ichi GOTO     <gotoh@taiyo.co.jp>,
@@ -26,9 +25,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, you can either send email to this
-;; program's maintainer or write to: The Free Software Foundation,
-;; Inc.; 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Commentary:
 
@@ -61,6 +60,9 @@
   (defvar w3m-work-buffer-list)
   (defvar w3m-use-japanese-menu)
   (defvar w3m-mode-map)
+  (defvar w3m-use-title-buffer-name)
+  (defvar w3m-buffer-unseen)
+  (defvar w3m-puny-utf-16be)
   (unless (fboundp 'select-frame-set-input-focus)
     (defalias 'select-frame-set-input-focus 'ignore)))
 
@@ -70,29 +72,34 @@
     (require 'poem)))
 
 ;;; Things should be defined in advance:
+(eval-when-compile
+  (autoload 'w3m-fb-frame-parameter "w3m-fb")
+  (autoload 'w3m-history-restore-position "w3m-hist" nil t))
 
-(eval-and-compile
-  (autoload 'w3m-fb-frame-parameter "w3m-fb"))
+;; XEmacs 21.4 wants this.
+(defalias 'w3m-make-local-hook (if (featurep 'xemacs)
+				   'make-local-hook
+				 'ignore))
 
 ;;; Control structures:
 
 (defmacro w3m-static-if (cond then &rest else)
   "Like `if', except that it evaluates COND at compile-time."
-  (if (eval cond) then (` (progn  (,@ else)))))
+  (if (eval cond) then `(progn  ,@else)))
 (put 'w3m-static-if 'lisp-indent-function 2)
 
 (put 'w3m-static-when 'lisp-indent-function 1)
 (defmacro w3m-static-when (cond &rest body)
   "Like `when', but evaluate COND at compile time."
   (if (eval cond)
-      (` (progn (,@ body)))))
+      `(progn ,@body)))
 
 (put 'w3m-static-unless 'lisp-indent-function 1)
 (defmacro w3m-static-unless (cond &rest body)
   "Like `unless', but evaluate COND at compile time."
   (if (eval cond)
       nil
-    (` (progn (,@ body)))))
+    `(progn ,@body)))
 
 (defmacro w3m-static-cond (&rest clauses)
   "Like `cond', except that it evaluates CONDITION part of each clause at
@@ -103,15 +110,15 @@ compile-time."
   (if clauses
       (cons 'progn (cdr (car clauses)))))
 
-(put 'w3m-condition-case lisp-indent-function 2)
+(put 'w3m-condition-case 'lisp-indent-function 2)
 (defmacro w3m-condition-case (var bodyform &rest handlers)
   "Like `condition-case', except that signal an error if `debug-on-error'
 or `debug-on-quit' is non-nil."
-  (` (if (or debug-on-error debug-on-quit)
-	 (, bodyform)
-       (condition-case (, var)
-	   (, bodyform)
-	 (,@ handlers)))))
+  `(if (or debug-on-error debug-on-quit)
+       ,bodyform
+     (condition-case ,var
+	 ,bodyform
+       ,@handlers)))
 
 
 ;;; Text props:
@@ -124,9 +131,9 @@ or `debug-on-quit' is non-nil."
 	     '(list 'start-open t)
 	   ;; Default to front-nonsticky and rear-sticky in Emacsen.
 	   '(list 'rear-nonsticky t))))
-    (` (add-text-properties (, start) (, end)
-			    (append (, non-stickies) (, props))
-			    (, object)))))
+    `(add-text-properties ,start ,end
+			  (append ,non-stickies ,props)
+			  ,object)))
 
 (defun w3m-add-face-property (start end name &optional object)
   "Add face NAME to the face text property of the text from START to END.
@@ -170,17 +177,17 @@ into it."
 the current position.  Return the value corresponding to PROP or nil.
 If PROP is not found at the current position, point will move to the
 position where PROP exists."
-  (` (let ((position (point))
-	   value)
-       (or (get-text-property position (, prop))
-	   (and (not (bolp))
-		(setq value (get-text-property (1- position) (, prop)))
-		(goto-char (1- position))
-		value)
-	   (and (not (eolp))
-		(setq value (get-text-property (1+ position) (, prop)))
-		(goto-char (1+ position))
-		value)))))
+  `(let ((position (point))
+	 value)
+     (or (get-text-property position ,prop)
+	 (and (not (bolp))
+	      (setq value (get-text-property (1- position) ,prop))
+	      (goto-char (1- position))
+	      value)
+	 (and (not (eolp))
+	      (setq value (get-text-property (1+ position) ,prop))
+	      (goto-char (1+ position))
+	      value))))
 
 (defmacro w3m-action (&optional position)
   "Return the value of the `w3m-action' property at the given POSITION.
@@ -188,8 +195,8 @@ NOTE: If POSITION is omitted, it searches for the property in one
 character before and behind the current position, and point will move
 to the position where the property exists."
   (if position
-      (` (get-text-property (, position) 'w3m-action))
-    (` (w3m-get-text-property-around 'w3m-action))))
+      `(get-text-property ,position 'w3m-action)
+    `(w3m-get-text-property-around 'w3m-action)))
 
 (defmacro w3m-anchor (&optional position)
   "Return the value of the `w3m-href-anchor' property at the given POSITION.
@@ -197,8 +204,8 @@ NOTE: If POSITION is omitted, it searches for the property in one
 character before and behind the current position, and point will move
 to the position where the property exists."
   (if position
-      (` (get-text-property (, position) 'w3m-href-anchor))
-    (` (w3m-get-text-property-around 'w3m-href-anchor))))
+      `(get-text-property ,position 'w3m-href-anchor)
+    `(w3m-get-text-property-around 'w3m-href-anchor)))
 
 (defmacro w3m-image (&optional position)
   "Return the value of the `w3m-image' property at the given POSITION.
@@ -206,8 +213,26 @@ NOTE: If POSITION is omitted, it searches for the property in one
 character before and behind the current position, and point will move
 to the position where the property exists."
   (if position
-      (` (get-text-property (, position) 'w3m-image))
-    (` (w3m-get-text-property-around 'w3m-image))))
+      `(get-text-property ,position 'w3m-image)
+    `(w3m-get-text-property-around 'w3m-image)))
+
+(defmacro w3m-image-alt (&optional position)
+  "Return the value of the `w3m-image-alt' property at the given POSITION.
+NOTE: If POSITION is omitted, it searches for the property in one
+character before and behind the current position, and point will move
+to the position where the property exists."
+  (if position
+      `(get-text-property ,position 'w3m-image-alt)
+    `(w3m-get-text-property-around 'w3m-image-alt)))
+
+(defmacro w3m-anchor-title (&optional position)
+  "Return the value of the `w3m-anchor-title' property at the given POSITION.
+NOTE: If POSITION is omitted, it searches for the property in one
+character before and behind the current position, and point will move
+to the position where the property exists."
+  (if position
+      `(get-text-property ,position 'w3m-anchor-title)
+    `(w3m-get-text-property-around 'w3m-anchor-title)))
 
 (defmacro w3m-submit (&optional position)
   "Return the value of the `w3m-submit' property at the given POSITION.
@@ -215,14 +240,14 @@ NOTE: If POSITION is omitted, it searches for the property in one
 character before and behind the current position, and point will move
 to the position where the property exists."
   (if position
-      (` (get-text-property (, position) 'w3m-submit))
-    (` (w3m-get-text-property-around 'w3m-submit))))
+      `(get-text-property ,position 'w3m-submit)
+    `(w3m-get-text-property-around 'w3m-submit)))
 
 (defmacro w3m-anchor-sequence (&optional position)
   "Return the value of the `w3m-anchor-sequence' property at POSITION.
 If POSITION is omitted, the current position is assumed."
   (if position
-      (` (get-text-property (, position) 'w3m-anchor-sequence))
+      `(get-text-property ,position 'w3m-anchor-sequence)
     '(get-text-property (point) 'w3m-anchor-sequence)))
 
 
@@ -238,7 +263,19 @@ If POSITION is omitted, the current position is assumed."
 (put 'w3m-parse-attributes 'lisp-indent-function '1)
 (def-edebug-spec w3m-parse-attributes
   ((&rest &or (symbolp &optional symbolp) symbolp) body))
-(defmacro w3m-parse-attributes (attributes &rest form)
+(defmacro w3m-parse-attributes (attributes &rest forms)
+  "Extract ATTRIBUTES, KEYWORD=\"VALUE\" pairs, in a tag and run FORMS.
+ATTRIBUTES is a list of symbols that looks like `(KEYWORD KEYWORD...)'.
+A symbol KEYWORD, that will express a value extracted from a tag, can
+be used as a Lisp variable within FORMS.  The point has to be within
+a tag initially, and only attributes that follow the point will be
+extracted.
+
+The value of KEYWORD is a string by default, or is nil if the KEYWORD
+is not found in a tag.  KEYWORD can be `(KEYWORD TYPE)', where TYPE is
+one of `:case-ignore', `:integer', `:bool', and `:decode-entity'.
+Those types mean converting the value into a lower-case string,
+an integer, a boolean (t or nil), and a decoded string respectively."
   `(let (,@(mapcar (lambda (attr)
 		     (if (listp attr)
 			 (car attr)
@@ -291,12 +328,12 @@ If POSITION is omitted, the current position is assumed."
        (skip-chars-forward " \t\r\f\n"))
      (skip-chars-forward "^>")
      (forward-char)
-     ,@form))
+     ,@forms))
 
 
 ;;; Working buffers:
 
-(defsubst w3m-get-buffer-create (name)
+(defun w3m-get-buffer-create (name)
   "Return the buffer named NAME, or create such a buffer and return it."
   (or (get-buffer name)
       (let ((buf (get-buffer-create name)))
@@ -304,7 +341,7 @@ If POSITION is omitted, the current position is assumed."
 	(buffer-disable-undo buf)
 	buf)))
 
-(defsubst w3m-kill-buffer (buffer)
+(defun w3m-kill-buffer (buffer)
   "Kill the buffer BUFFER and remove it from `w3m-work-buffer-list'.
 The argument may be a buffer or may be the name of a buffer.
 An argument of nil means kill the current buffer."
@@ -324,9 +361,11 @@ An argument of nil means kill the current buffer."
       (kill-buffer buf)))
   (setq w3m-work-buffer-list nil))
 
-(defsubst w3m-current-title ()
+(defun w3m-current-title ()
   "Return the title of the current buffer."
   (cond
+   (w3m-current-process
+     "<retrieving>")
    ((and (stringp w3m-current-title)
 	 (not (string= w3m-current-title "<no-title>")))
     w3m-current-title)
@@ -337,27 +376,56 @@ An argument of nil means kill the current buffer."
        w3m-current-url)))
    (t "<no-title>")))
 
-(defsubst w3m-buffer-title (buffer)
+(defun w3m-buffer-title (buffer)
   "Return the title of the buffer BUFFER."
   (with-current-buffer buffer
     (w3m-current-title)))
 
-(defsubst w3m-buffer-number (buffer)
+(defun w3m-buffer-number (buffer)
   (when (and (bufferp buffer)
-	     (string-match "\\`\\*w3m\\*\\(<\\([0-9]+\\)>\\)?\\'"
+	     (string-match "\\*w3m\\*\\(<\\([0-9]+\\)>\\)?\\'"
 			   (buffer-name buffer)))
     (if (match-beginning 1)
 	(string-to-number (match-string 2 (buffer-name buffer)))
       1))) ;; `1' should not be represented in the buffer name.
 
-(defsubst w3m-buffer-set-number (buffer number)
-  (unless (eq (w3m-buffer-number buffer) number)
-    (with-current-buffer buffer
-      (let ((newname (if (= number 1)
+(defun w3m-buffer-set-number (buffer number)
+  (with-current-buffer buffer
+    (let ((newname (if w3m-use-title-buffer-name
+		       (if (= number 1)
+			   (format "%s *w3m*" (w3m-current-title))
+			 (format "%s *w3m*<%d>" (w3m-current-title) number))
+		     (if (= number 1)
 			 "*w3m*"
-		       (format "*w3m*<%d>" number))))
+		       (format "*w3m*<%d>" number)))))
+      (if (eq (w3m-buffer-number buffer) number)
+	  (when w3m-use-title-buffer-name
+	    (unless (get-buffer newname)
+	      (rename-buffer newname)))
 	(unless (get-buffer newname)
 	  (rename-buffer newname))))))
+
+(defun w3m-buffer-name-add-title ()
+  "Add current tile to buffer name."
+  (when w3m-use-title-buffer-name
+    (let ((number (w3m-buffer-number (current-buffer)))
+	  newname)
+      (if (= number 1)
+	  (setq newname (format "%s *w3m*" (w3m-current-title)))
+	(setq newname (format "%s *w3m*<%d>" (w3m-current-title) number)))
+      (rename-buffer newname))))
+
+(defun w3m-generate-new-buffer (name)
+  (if w3m-use-title-buffer-name
+      (let* ((maxbuf (let ((w3m-fb-mode nil))
+		       (car (nreverse (w3m-list-buffers)))))
+	     (number (w3m-buffer-number maxbuf)))
+	(when (string-match "\\*w3m\\*\\(<\\([0-9]+\\)>\\)?\\'" name)
+	  (setq name "*w3m*"))
+	(if (and maxbuf number)
+	    (generate-new-buffer (format "%s<%d>" name (1+ number)))
+	  (generate-new-buffer name)))
+    (generate-new-buffer name)))
 
 (defun w3m-buffer-name-lessp (x y)
   "Return t if first arg buffer's name is less than second."
@@ -365,12 +433,12 @@ An argument of nil means kill the current buffer."
     (setq x (buffer-name x)))
   (when (bufferp y)
     (setq y (buffer-name y)))
-  (if (and (string-match "\\`\\*w3m\\*\\(<\\([0-9]+\\)>\\)?\\'" x)
+  (if (and (string-match "\\*w3m\\*\\(<\\([0-9]+\\)>\\)?\\'" x)
 	   (setq x (cons x
 			 (if (match-beginning 1)
 			     (string-to-number (match-string 2 x))
 			   1))))
-      (if (string-match "\\`\\*w3m\\*\\(<\\([0-9]+\\)>\\)?\\'" y)
+      (if (string-match "\\*w3m\\*\\(<\\([0-9]+\\)>\\)?\\'" y)
 	  (< (cdr x)
 	     (if (match-beginning 1)
 		 (string-to-number (match-string 2 y))
@@ -392,7 +460,8 @@ buffer names."
     (setq buffers (if nosort
 		      (nreverse rest)
 		    (sort rest #'w3m-buffer-name-lessp)))
-    (when (and w3m-fb-mode
+    (when (and (boundp 'w3m-fb-mode)
+	       w3m-fb-mode
 	       (if (or w3m-pop-up-frames
 		       (not (memq 'w3m-fb-add w3m-mode-hook)))
 		   ;; `w3m-fb-mode' might have been set by something
@@ -448,10 +517,10 @@ the tabs line."
 	(t
 	 'w3m-use-tab)))
 
-(defsubst w3m-lefttab-exist-p (&optional buffer)
+(defun w3m-lefttab-exist-p (&optional buffer)
   (not (eq (or buffer (current-buffer)) (car (w3m-list-buffers)))))
 
-(defsubst w3m-righttab-exist-p (&optional buffer)
+(defun w3m-righttab-exist-p (&optional buffer)
   (let ((bufs (w3m-list-buffers))
 	(cbuf (or buffer (current-buffer)))
 	buf)
@@ -460,6 +529,22 @@ the tabs line."
 	(setq bufs (cdr bufs))
 	(when (eq cbuf buf)
 	  (throw 'exist bufs))))))
+
+(defun w3m-switch-to-buffer (buffer-or-name &optional norecord)
+  "Switch to buffer BUFFER-OR-NAME in the selected window.
+Optional argument NORECORD non-nil means do not put the buffer
+specified by BUFFER-OR-NAME at the front of the buffer list and
+do not make the window displaying it the most recently selected
+one.  Return the buffer switched to.
+
+This function is intended for the non-interactive use."
+  (let ((buffer (or (get-buffer buffer-or-name)
+		    (generate-new-buffer buffer-or-name))))
+    (set-window-buffer nil buffer)
+    (set-buffer buffer)
+    (unless norecord
+      (select-window (selected-window)))
+    buffer))
 
 (defmacro w3m-popup-window-p ()
   "Return non-nil if `w3m-pop-up-windows' is non-nil and the present
@@ -513,7 +598,7 @@ according to `w3m-pop-up-windows' and `w3m-pop-up-frames' (which see)."
 		 (setq w3m-initial-frames
 		       (prog1
 			   (copy-sequence w3m-initial-frames)
-			 (switch-to-buffer buffer))))
+			 (w3m-switch-to-buffer buffer))))
 		(frame
 		 ;; Pop up the existing frame which shows BUFFER.
 		 (pop-to-buffer buffer))
@@ -529,12 +614,16 @@ according to `w3m-pop-up-windows' and `w3m-pop-up-frames' (which see)."
 	    (raise-frame frame)
 	    (select-frame frame)
 	    (w3m-static-when (featurep 'xemacs)
-	      (focus-frame frame))))
-      ;; Simply switch to BUFFER in the current frame.
-      (if (w3m-popup-window-p)
-	  (let ((pop-up-windows t))
-	    (pop-to-buffer buffer))
-	(switch-to-buffer buffer)))))
+	      (focus-frame frame)))
+	  (w3m-history-restore-position))
+      (unless (prog1
+		  (eq buffer (current-buffer))
+		;; Simply switch to BUFFER in the current frame.
+		(if (w3m-popup-window-p)
+		    (let ((pop-up-windows t))
+		      (pop-to-buffer buffer))
+		  (w3m-switch-to-buffer buffer)))
+	(w3m-history-restore-position)))))
 
 (eval-when-compile
   (when (and (fboundp 'select-frame-set-input-focus)
@@ -641,9 +730,12 @@ objects will not be deleted:
 			    (if (eq w exception)
 				(setq flag nil)
 			      (set-buffer (window-buffer w))
-			      (setq flag (memq major-mode
-					       '(w3m-mode
-						 w3m-select-buffer-mode))))))
+			      (setq flag (or (memq major-mode
+						   '(w3m-mode
+						     w3m-select-buffer-mode
+						     w3m-session-select-mode))
+					     (string-match "\\` ?\\*w3m[ -]"
+							   (buffer-name)))))))
 			'no-minibuf)
 		       (set-buffer buffer)
 		       flag))
@@ -658,7 +750,7 @@ objects will not be deleted:
 (defconst w3m-url-fallback-base "http:///")
 (defconst w3m-url-invalid-regexp "\\`http:///")
 
-(defsubst w3m-url-valid (url)
+(defun w3m-url-valid (url)
   (and url (not (string-match w3m-url-invalid-regexp url))
        url))
 
@@ -716,6 +808,205 @@ but it works even if the tag is considerably large.
 Note: this macro allows only strings for NAMES, that is, a form
 something like `(if foo \"bar\" \"baz\")' cannot be used."
   `(w3m-search-tag-1 ,(concat "<" (regexp-opt names t))))
+
+(defun w3m-beginning-of-tag (&optional tag include-whitespace)
+  "Move point to the beginning of tag.  Inner nested tags are skipped.
+If TAG, which is a name of the tag, is given, this function moves point
+backward from the closing-tag </TAG> (point has to exist after or within
+it initially) to the beginning point of the open-tag <TAG ...>.  For
+example, in the following two situations, point moves backward from the
+rightmost tag to the beginning point of the leftmost tag:
+
+<TAG ...>...<TAG ...>...<TAG ...>...</TAG>...</TAG>...</TAG>
+<TAG ...>...<TAG ...>...</TAG>...<TAG ...>...</TAG>...</TAG>
+
+If TAG is omitted or nil, this function moves point backward to the
+beginning point of the tag in which point exists.  In this case, point
+has to initially exist between the end position of the closing-tag and
+the previous tag as follows:
+
+<!-- foo <bar ...<baz ...>...> -->
+                              ^^^
+If INCLUDE-WHITESPACE is non-nil, include leading and trailing
+whitespace.  Return the end-point and set the match-data #0, #1, #2,
+and #3 as follows (\"___\" shows whitespace):
+
+The case where TAG is spefified:
+___<TAG ...>___...___</TAG>___
+   0        1  2  2  1     0     INCLUDE-WHITESPACE=nil
+0  1        2  3  3  2     1  0  INCLUDE-WHITESPACE=non-nil
+
+The case where TAG is nil:
+___<TAG ...>___
+   0        0     INCLUDE-WHITESPACE=nil
+0  1        1  0  INCLUDE-WHITESPACE=non-nil"
+  (let ((init (point))
+	(num 1)
+	(md (match-data))
+	(case-fold-search t)
+	end regexp nd1 nd2 nd3 st1 st2 st3 st0 nd0)
+    (condition-case nil
+	(progn
+	  (if tag
+	      (progn
+		(setq end (point)
+		      tag (regexp-quote tag))
+		(if (and (re-search-backward (concat "\
+\\(<[\t\n\r ]*/[\t\n\r ]*" tag "\
+\\(?:[\t\n\r ]*\\|[\t\n\r ]+[^>]+\\)>\\)[\t\n\r ]*") nil t)
+			 (eq end (match-end 0)))
+		    (progn
+		      (setq nd1 (nth 3 (match-data)) ;; (match-end 1)
+			    nd2 (nth 2 (match-data))) ;; (match-beginning 1)
+		      (skip-chars-backward "\t\n\r ")
+		      (setq nd3 (point-marker))
+		      (goto-char end))
+		  (goto-char end)
+		  (search-forward ">")
+		  (setq end (point))
+		  (if (and (re-search-backward (concat "\
+<[\t\n\r ]*/[\t\n\r ]*" tag "\\(?:[\t\n\r ]*\\|[\t\n\r ]+[^>]+\\)>"))
+			   (eq end (match-end 0)))
+		      (progn
+			(setq nd1 (nth 1 (match-data)) ;; (match-end 0)
+			      nd2 (car (match-data))) ;; (match-beginning 0)
+			(skip-chars-backward "\t\n\r ")
+			(setq nd3 (point-marker)))
+		    (error "")))
+		(goto-char (1- nd2))
+		(setq regexp (concat "\\(<\\([\t\n\r ]*/\\)?[\t\n\r ]*" tag "\
+\\(?:[\t\n\r ]*\\|[\t\n\r ]+[^>]+\\)>\\)[\t\n\r ]*"))
+		(while (and (> num 0)
+			    (re-search-backward regexp))
+		  (setq num (if (match-beginning 2)
+				(1+ num)
+			      (1- num))))
+		(setq st1 (car (match-data)) ;; (match-beginning 0)
+		      st2 (nth 3 (match-data)) ;; (match-end 1)
+		      st3 (nth 1 (match-data)))) ;; (match-end 0)
+	    (search-forward ">")
+	    (setq nd1 (nth 1 (match-data))) ;; (match-end 0)
+	    (goto-char init)
+	    (while (and (> num 0)
+			(re-search-backward "\\(<\\)\\|>"))
+	      (setq num (if (match-beginning 1)
+			    (1- num)
+			  (1+ num))))
+	    (setq st1 (nth 2 (match-data)))) ;; (match-beginning 1)
+	  (if include-whitespace
+	      (progn
+		(skip-chars-backward "\t\n\r ")
+		(setq st0 (point-marker))
+		(goto-char nd1)
+		(skip-chars-forward "\t\n\r ")
+		(setq nd0 (point-marker))
+		(goto-char st0)
+		(set-match-data (if tag
+				    (list st0 nd0 st1 nd1 st2 nd2 st3 nd3)
+				  (list st0 nd0 st1 nd1))))
+	    (set-match-data (if tag
+				(list st1 nd1 st2 nd2 st3 nd3)
+			      (list st1 nd1))))
+	  (point))
+      (error
+       (set-match-data md)
+       (goto-char init)
+       nil))))
+
+(defun w3m-end-of-tag (&optional tag include-whitespace)
+  "Move point to the end of tag.  Inner nested tags are skipped.
+If TAG, which is a name of the tag, is given, this function moves point
+from the open-tag <TAG ...> (point has to exist in front of or within
+it initially) to the end point of the closing-tag </TAG>.  For example,
+in the following two situations, point moves from the leftmost tag to
+the end point of the rightmost tag:
+
+<TAG ...>...<TAG ...>...<TAG ...>...</TAG>...</TAG>...</TAG>
+<TAG ...>...<TAG ...>...</TAG>...<TAG ...>...</TAG>...</TAG>
+
+If TAG is omitted or nil, this function moves point to the end point of
+the tag in which point exists.  In this case, point has to initially
+exist between the beginning position of the tag and the next tag as
+follows:
+
+<!-- foo <bar ...<baz ...>...> -->
+ ^^^^^^^^
+If INCLUDE-WHITESPACE is non-nil, include leading and trailing
+whitespace.  Return the end-point and set the match-data #0, #1, #2,
+and #3 as follows (\"___\" shows whitespace):
+
+The case where TAG is spefified:
+___<TAG ...>___...___</TAG>___
+   0        1  2  2  1     0     INCLUDE-WHITESPACE=nil
+0  1        2  3  3  2     1  0  INCLUDE-WHITESPACE=non-nil
+
+The case where TAG is nil:
+___<TAG ...>___
+   0        0     INCLUDE-WHITESPACE=nil
+0  1        1  0  INCLUDE-WHITESPACE=non-nil"
+  (let ((init (point))
+	(num 1)
+	(md (match-data))
+	(case-fold-search t)
+	regexp st1 st2 st3 nd1 nd2 nd3 nd0 st0)
+    (condition-case nil
+	(progn
+	  (if tag
+	      (progn
+		(setq tag (regexp-quote tag))
+		(if (looking-at (concat "\
+\[\t\n\r ]*\\(<[\t\n\r ]*" tag "\\(?:[\t\n\r ]*\\|[\t\n\r ]+[^>]+\\)>\\)\
+\[\t\n\r ]*"))
+		    (setq st1 (nth 2 (match-data)) ;; (match-beginning 1)
+			  st2 (nth 3 (match-data)) ;; (match-end 1)
+			  st3 (nth 1 (match-data))) ;; (match-end 0)
+		  (search-backward "<")
+		  (if (looking-at (concat "\
+\\(<[\t\n\r ]*" tag "\\(?:[\t\n\r ]*\\|[\t\n\r ]+[^>]+\\)>\\)[\t\n\r ]*"))
+		      (setq st1 (car (match-data)) ;; (match-beginning 0)
+			    st2 (nth 3 (match-data)) ;; (match-end 1))
+			    st3 (nth 1 (match-data))) ;; (match-end 0)
+		    (error "")))
+		(goto-char (1+ st1))
+		(setq regexp (concat "\
+\[\t\n\r ]*\\(<\\([\t\n\r ]*/\\)?[\t\n\r ]*" tag "\
+\\(?:[\t\n\r ]*\\|[\t\n\r ]+[^>]+\\)>\\)"))
+		(while (and (> num 0)
+			    (re-search-forward regexp))
+		  (setq num (if (match-beginning 2)
+				(1- num)
+			      (1+ num))))
+		(setq nd1 (nth 3 (match-data)) ;; (match-end 1)
+		      nd2 (nth 2 (match-data)) ;; (match-beginning 1)
+		      nd3 (car (match-data)))) ;; (match-beginning 0)
+	    (search-backward "<")
+	    (setq st1 (car (match-data))) ;; (match-beginning 0)
+	    (goto-char init)
+	    (while (and (> num 0)
+			(re-search-forward "\\(>\\)\\|<"))
+	      (setq num (if (match-beginning 1)
+			    (1- num)
+			  (1+ num))))
+	    (setq nd1 (nth 3 (match-data)))) ;; (match-end 1)
+	  (if include-whitespace
+	      (progn
+		(skip-chars-forward "\t\n\r ")
+		(setq nd0 (point-marker))
+		(goto-char st1)
+		(skip-chars-backward "\t\n\r ")
+		(setq st0 (point-marker))
+		(goto-char nd0)
+		(set-match-data (if tag
+				    (list st0 nd0 st1 nd1 st2 nd2 st3 nd3)
+				  (list st0 nd0 st1 nd1))))
+	    (set-match-data (if tag
+				(list st1 nd1 st2 nd2 st3 nd3)
+			      (list st1 nd1))))
+	  (point))
+      (error
+       (set-match-data md)
+       (goto-char init)
+       nil))))
 
 (defun w3m-string-match-url-components-1 (string)
   "Subroutine used by `w3m-string-match-url-components'."
@@ -779,7 +1070,7 @@ But this function should work even if STRING is considerably long."
        (error ;; Stack overflow in regexp matcher
 	(w3m-string-match-url-components-1 string)))))
 
-(defsubst w3m-time-newer-p (a b)
+(defun w3m-time-newer-p (a b)
   "Return t, if A is newer than B.  Otherwise return nil.
 A and B are lists which represent time in Emacs-style.  If value is
 nil, it is regarded as the oldest time."
@@ -789,7 +1080,7 @@ nil, it is regarded as the oldest time."
 	       (and (= (car a) (car b))
 		    (> (nth 1 a) (nth 1 b)))))))
 
-(defsubst w3m-time-lapse-seconds (start end)
+(defun w3m-time-lapse-seconds (start end)
   "Return lapse seconds from START to END.
 START and END are lists which represent time in Emacs-style."
   (+ (* (- (car end) (car start)) 65536)
@@ -817,7 +1108,7 @@ Do not use this function if precise time stamps are required."
 		 (t
 		  0)))))))
 
-(defsubst w3m-url-local-p (url)
+(defun w3m-url-local-p (url)
   "If URL points a file on the local system, return non-nil value.
 Otherwise return nil."
   (string-match "\\`file:" url))
@@ -826,13 +1117,13 @@ Otherwise return nil."
   "\\`\\([^:/?#]+:\\)?//\\([^/?#:]+\\)\\(?::\\([^/?#@]+\\)\\)?@"
   "Regular expression for parsing the authentication part of a URI reference")
 
-(defsubst w3m-url-authinfo (url)
+(defun w3m-url-authinfo (url)
   "Return a user name and a password to authenticate URL."
   (when (string-match w3m-url-authinfo-regexp url)
     (cons (match-string 2 url)
 	  (match-string 3 url))))
 
-(defsubst w3m-url-strip-authinfo (url)
+(defun w3m-url-strip-authinfo (url)
   "Remove the authentication part from the URL."
   (if (string-match w3m-url-authinfo-regexp url)
       (concat (match-string 1 url)
@@ -840,13 +1131,13 @@ Otherwise return nil."
 	      (substring url (match-end 0)))
     url))
 
-(defsubst w3m-url-strip-fragment (url)
+(defun w3m-url-strip-fragment (url)
   "Remove the fragment identifier from the URL."
   (if (string-match "\\`\\([^#]*\\)#" url)
       (match-string 1 url)
     url))
 
-(defsubst w3m-url-strip-query (url)
+(defun w3m-url-strip-query (url)
   "Remove the query part and the fragment identifier from the URL."
   (if (string-match "\\`\\([^?#]*\\)[?#]" url)
       (match-string 1 url)
@@ -861,7 +1152,7 @@ Otherwise return nil."
       (downcase (match-string 1 url))
     url))
 
-(defsubst w3m-which-command (command)
+(defun w3m-which-command (command)
   (when (stringp command)
     (if (and (file-name-absolute-p command)
 	     (file-executable-p command))
@@ -907,7 +1198,7 @@ Otherwise return nil."
       (t
        (defalias 'w3m-truncate-string 'truncate-string-to-width)))
 
-(defsubst w3m-assoc-ignore-case (name alist)
+(defun w3m-assoc-ignore-case (name alist)
   "Return the element of ALIST whose car equals NAME ignoring its case."
   (let ((dname (downcase name))
 	match)
@@ -987,10 +1278,9 @@ the region active."
 	 (setq zmacs-region-stays t))))
 
 (defmacro w3m-deactivate-region ()
-  "Deactivate the region.
-This macro does nothing in XEmacs, because the region is always
-deactivated after evaluating the current command."
-  (unless (featurep 'xemacs)
+  "Deactivate the region."
+  (if (featurep 'xemacs)
+      '(zmacs-deactivate-region)
     '(deactivate-mark)))
 
 (defmacro w3m-region-active-p ()
@@ -999,19 +1289,50 @@ deactivated after evaluating the current command."
       (list 'region-active-p)
     (list 'and 'transient-mark-mode 'mark-active)))
 
-(cond
- ((fboundp 'replace-regexp-in-string)
-  (defun w3m-replace-in-string  (string regexp newtext &optional literal)
-    ;;(replace-regexp-in-string regexp newtext string nil literal)))
-    ;;
-    ;; Don't call the symbol function `replace-regexp-in-string' directly
-    ;; in order to silence the byte-compiler when an Emacs which doesn't
-    ;; provide it is used.  The following form generates exactly the same
-    ;; byte-code.
-    (funcall (symbol-function 'replace-regexp-in-string)
-	     regexp newtext string nil literal)))
- (t
-  (defalias 'w3m-replace-in-string 'replace-in-string)))
+(eval-and-compile
+  (cond
+   ((fboundp 'replace-regexp-in-string)
+    (defun w3m-replace-in-string  (string regexp newtext &optional literal)
+      ;;(replace-regexp-in-string regexp newtext string nil literal)))
+      ;;
+      ;; Don't call the symbol function `replace-regexp-in-string' directly
+      ;; in order to silence the byte-compiler when an Emacs which doesn't
+      ;; provide it is used.  The following form generates exactly the same
+      ;; byte-code.
+      (funcall (symbol-function 'replace-regexp-in-string)
+	       regexp newtext string nil literal)))
+   (t
+    (defalias 'w3m-replace-in-string 'replace-in-string))))
+
+(defun w3m-replace-regexps-in-string (string &rest regexps)
+  "In STRING replace an alist of REGEXPS."
+  (if (cadr regexps)
+      (w3m-replace-in-string
+       (apply #'w3m-replace-regexps-in-string string (cddr regexps))
+       (car regexps) (cadr regexps))
+    string))
+
+(if (fboundp 'string-match-p)
+    (defalias 'w3m-string-match-p 'string-match-p)
+  (defun w3m-string-match-p (regexp string &optional start)
+    "\
+Same as `string-match' except this function does not change the match data."
+    (save-match-data
+      (string-match regexp string start))))
+
+(if (fboundp 'substring-no-properties)
+    (defalias 'w3m-substring-no-properties 'substring-no-properties)
+  (defun w3m-substring-no-properties (string &optional from to)
+    "Return a substring of STRING, without text properties.
+It starts at index FROM and ending before TO.
+TO may be nil or omitted; then the substring runs to the end of STRING.
+If FROM is nil or omitted, the substring starts at the beginning of STRING.
+If FROM or TO is negative, it counts from the end.
+
+With one argument, just copy STRING without its properties."
+    (setq string (substring string (or from 0) to))
+    (set-text-properties 0 (length string) nil string)
+    string))
 
 (if (fboundp 'compare-strings)
     (defalias 'w3m-compare-strings 'compare-strings)
@@ -1049,6 +1370,36 @@ If SECONDS is omitted, it defaults to 0.5."
 		   buffer))
   (defalias 'w3m-force-window-update-later 'ignore))
 
+(if (fboundp 'read-number)
+    (defalias 'w3m-read-number 'read-number)
+  (defun w3m-read-number (prompt &optional default)
+    "Read a numeric value in the minibuffer, prompting with PROMPT.
+DEFAULT specifies a default value to return if the user just types RET.
+The value of DEFAULT is inserted into PROMPT."
+    (let ((n nil))
+      (when default
+	(setq prompt
+	      (if (string-match "\\(\\):[ \t]*\\'" prompt)
+		  (replace-match (format " (default %s)" default) t t prompt 1)
+		(w3m-replace-in-string prompt "[ \t]*\\'"
+				       (format " (default %s) " default)
+				       t))))
+      (while
+	  (progn
+	    (let ((str (read-from-minibuffer
+			prompt nil nil nil nil
+			(and default (number-to-string default)))))
+	      (condition-case nil
+		  (setq n (cond
+			   ((zerop (length str)) default)
+			   ((stringp str) (read str))))
+		(error nil)))
+	    (unless (numberp n)
+	      (message "Please enter a number.")
+	      (sit-for 1)
+	      t)))
+      n)))
+
 (defun w3m-make-menu-item (japan english)
   "Make menu item."
   (cond
@@ -1070,10 +1421,10 @@ If SECONDS is omitted, it defaults to 0.5."
 	  (cadr c)
 	  (if (nth 3 c)
 	      `(progn
-		 (switch-to-buffer w3m-tab-button-menu-current-buffer)
+		 (w3m-switch-to-buffer w3m-tab-button-menu-current-buffer)
 		 (funcall (function ,(car c)) ,@(nthcdr 4 c)))
 	    `(save-window-excursion
-	       (switch-to-buffer w3m-tab-button-menu-current-buffer)
+	       (w3m-switch-to-buffer w3m-tab-button-menu-current-buffer)
 	       (funcall (function ,(car c)) ,@(nthcdr 4 c))))
 	  :active (nth 2 c)
 	  :keys (or (and (assq (car c) w3m-make-menu-commands-keys)
@@ -1093,6 +1444,246 @@ If SECONDS is omitted, it defaults to 0.5."
   "Convert the car of `:args' as a widget type in WIDGET."
   (apply 'widget-convert (widget-type widget)
 	 (eval (car (widget-get widget :args)))))
+
+(defun w3m-unseen-buffer-p (buffer)
+  "Return t if buffer unseen."
+  (with-current-buffer buffer
+    w3m-buffer-unseen))
+
+(defun w3m-visited-file-modtime ()
+  "Replacement of `visited-file-modtime'.
+It returns a list of two integers if the current buffer visits a file,
+otherwise returns the number 0.  In modern Emacsen, this function will
+get to be the alias to `visited-file-modtime'."
+  (let ((modtime (visited-file-modtime)))
+    (cond ((consp (cdr-safe modtime))
+	   (defalias 'w3m-visited-file-modtime 'visited-file-modtime)
+	   modtime)
+	  ((integerp (cdr-safe modtime))
+	   ;; XEmacs version returns `(0 . 0)' if no file is visited.
+	   (if (and (= (car modtime) 0) (= (cdr modtime) 0))
+	       0
+	     (list (car modtime) (cdr modtime))))
+	  (t
+	   modtime))))
+
+(defmacro w3m-interactive-p ()
+  (condition-case nil
+      (progn
+	(eval '(called-interactively-p 'any))
+	;; Emacs >=23.2
+	'(called-interactively-p 'any))
+    ;; Emacs <23.2
+    (wrong-number-of-arguments '(called-interactively-p))
+    ;; Old ones
+    (void-function '(interactive-p))))
+
+;;; Punycode RFC 3492:
+
+(defconst w3m-puny-code-regex "xn--\\([-0-9a-zA-z]+\\)")
+(defconst w3m-puny-code-nonascii "[^\000-\177]")
+
+(defconst w3m-puny-base 36)
+(defconst w3m-puny-tmin 1)
+(defconst w3m-puny-tmax 26)
+(defconst w3m-puny-damp 700)
+(defconst w3m-puny-skew 38)
+(defconst w3m-puny-initial-bias 72)
+(defconst w3m-puny-initial-n 128)
+(defconst w3m-puny-delimiter ?-)
+
+(defun w3m-puny-adapt (delta numpoints firsttime)
+  (let ((k 0))
+    (if firsttime
+	(setq delta (/ delta w3m-puny-damp))
+      (setq delta (/ delta 2)))
+    (setq delta (+ delta (/ delta numpoints)))
+    (while (> delta (/ (* (- w3m-puny-base w3m-puny-tmin) w3m-puny-tmax) 2))
+      (setq delta (/ delta (- w3m-puny-base w3m-puny-tmin)))
+      (setq k (+ k w3m-puny-base)))
+    (+ k (/ (* (1+ (- w3m-puny-base w3m-puny-tmin)) delta) (+ delta w3m-puny-skew)))))
+
+(defun w3m-puny-decode-digit (cp)
+  (if (< (- cp 48) 10)
+      (- cp 22)
+    (if (< (- cp 65) 26)
+	(- cp 65)
+      (if (< (- cp 97) 26)
+	  (- cp 97)
+	w3m-puny-base))))
+
+(defun w3m-puny-encode-digit (d)
+  (if (< d 26)
+      (+ d 22 75) ;; a-z
+    (+ d 22))) ;; 0-9
+
+(defun w3m-puny-decode1 (input)
+  (let* ((n w3m-puny-initial-n)
+	 (bias w3m-puny-initial-bias)
+	 (len (length input))
+	 (in 0) (out 0)
+	 (i 0) (b 0)
+	 digit thr oldi w k output ret)
+    (dotimes (j len)
+      (if (= (aref input j) w3m-puny-delimiter) (setq b j)))
+    (dotimes (j b)
+      (setq output (cons (aref input j) output))
+      (setq out (1+ out)))
+    (setq output (nreverse output))
+    (if (> b 0) (setq in (1+ b)) (setq in 0))
+    (while (< in len)
+      (setq oldi i)
+      (setq w 1)
+      (setq k w3m-puny-base)
+      (catch 'loop
+	(while t
+	  (if (>= in len) (error "punycode bad input"))
+	  (setq digit (w3m-puny-decode-digit (aref input in)))
+	  (if (>= digit w3m-puny-base) (error "punycode bad input"))
+	  (setq in (1+ in))
+	  (setq i (+ i (* digit w)))
+	  (if (<= k bias)
+	      (setq thr w3m-puny-tmin)
+	    (if (>= k (+ bias w3m-puny-tmax))
+		(setq thr w3m-puny-tmax)
+	      (setq thr (- k bias))))
+	  (if (< digit thr) (throw 'loop nil))
+	  (setq w (* w (- w3m-puny-base thr)))
+	  (setq k (+ k w3m-puny-base))))
+      (setq out (1+ out))
+      (setq bias (w3m-puny-adapt (- i oldi) out (= oldi 0)))
+      (setq n (+ n (/ i out)))
+      (setq i (% i out))
+      (if (= i 0)
+	  (setq output (cons n (nthcdr i output)))
+	(setcdr (nthcdr (1- i) output) (cons n (nthcdr i output))))
+      (setq i (1+ i)))
+    (setq ret (make-string (* out 2) ?a))
+    (let ((j 0))
+      (dolist (op output)
+	(aset ret j (/ op 256))
+	(setq j (1+ j))
+	(aset ret j (% op 256))
+	(setq j (1+ j))))
+    ret))
+
+(defun w3m-puny-decode (input)
+  (condition-case nil
+      (save-match-data
+	(decode-coding-string
+	 (w3m-puny-decode1 (substring input 4)) ;; xn--
+	 w3m-puny-utf-16be))
+    (error input)))
+
+(defun w3m-puny-decode-url (url)
+  "Decode URL from punycode."
+  (let ((case-fold-search t)
+	prot host after)
+    (when (and w3m-puny-utf-16be
+	       (string-match w3m-puny-code-regex url))
+      (when (string-match "\\`[^:/]+://\\([^/]+\\)" url)
+	(setq prot (substring url 0 (match-beginning 1)))
+	(setq host (substring url (match-beginning 1) (match-end 1)))
+	(setq after (substring url (match-end 0)))
+	(while (string-match w3m-puny-code-regex host)
+	  (setq host
+		(concat (substring host 0 (match-beginning 0))
+			(w3m-puny-decode
+			 (substring host (match-beginning 0) (match-end 0)))
+			(substring host (match-end 0)))))
+	(setq url (concat prot host after))))
+    url))
+
+(defun w3m-puny-encode1 (input)
+  (let* ((len (length input))
+	 (h-len (/ len 2))
+	 (n w3m-puny-initial-n)
+	 (bias w3m-puny-initial-bias)
+	 (delta 0) (out 0)
+	 (output (make-string (* len 4) ?a))
+	 h b m q k thr uni)
+    (dotimes (j len)
+      (setq uni (aref input j))
+      (setq j (1+ j))
+      (setq uni (+ (* uni 256) (aref input j)))
+      (when (< uni 128) ;; basic
+	(aset output out uni)
+	(setq out (1+ out))))
+    (setq h out)
+    (setq b out)
+    (when (> b 0)
+      (aset output out w3m-puny-delimiter)
+      (setq out (1+ out)))
+    (while (< h h-len)
+      (setq m 65536) ;; 17bits
+      (dotimes (j len)
+	(setq uni (aref input j))
+	(setq j (1+ j))
+	(setq uni (+ (* uni 256) (aref input j)))
+	(if (and (>= uni n) (< uni m)) (setq m uni)))
+      (setq delta (+ delta (* (- m n) (1+ h))))
+      (setq n m)
+      (dotimes (j len)
+	(setq uni (aref input j))
+	(setq j (1+ j))
+	(setq uni (+ (* uni 256) (aref input j)))
+	(when (< uni n)
+	  (setq delta (1+ delta))
+	  (if (= delta 0) (error "punycode overflow")))
+	(when (= uni n)
+	  (setq q delta)
+	  (setq k w3m-puny-base)
+	  (catch 'loop
+	    (while t
+	      (if (<= k bias)
+		  (setq thr w3m-puny-tmin)
+		(if (>= k (+ bias w3m-puny-tmax))
+		    (setq thr w3m-puny-tmax)
+		  (setq thr (- k bias))))
+	      (if (< q thr) (throw 'loop nil))
+	      (aset output out (w3m-puny-encode-digit (+ thr (% (- q thr) (- w3m-puny-base thr)))))
+	      (setq out (1+ out))
+	      (setq q (/ (- q thr) (- w3m-puny-base thr)))
+	      (setq k (+ k w3m-puny-base))))
+	  (aset output out (w3m-puny-encode-digit q))
+	  (setq out (1+ out))
+	  (setq bias (w3m-puny-adapt delta (1+ h) (= h b)))
+	  (setq delta 0)
+	  (setq h (1+ h))))
+      (setq delta (1+ delta))
+      (setq n (1+ n)))
+    (substring output 0 out)))
+
+(defun w3m-puny-encode (input)
+  (condition-case nil
+      (concat "xn--" (w3m-puny-encode1
+		      (encode-coding-string input w3m-puny-utf-16be)))
+    (error input)))
+
+(defun w3m-puny-encode-url (url)
+  "Encode URL to punycode."
+  (if (and w3m-puny-utf-16be
+	   (not (w3m-url-local-p url))
+	   (string-match w3m-puny-code-nonascii url))
+      (let (beg end idn)
+	(with-temp-buffer
+	  (insert url)
+	  (goto-char (point-min))
+	  (if (search-forward "://" nil t)
+	      (setq beg (point))
+	    (setq beg (point-min)))
+	  (if (search-forward "/" nil t)
+	      (setq end (1- (point)))
+	    (setq end (point-max)))
+	  (save-restriction
+	    (narrow-to-region beg end)
+	    (goto-char (point-min))
+	    (while (re-search-forward "[^.]?[^.\000-\177][^.]*" nil t)
+	      (setq idn (match-string-no-properties 0))
+	      (delete-region (match-beginning 0) (match-end 0))
+	      (insert (w3m-puny-encode idn))))
+	  (buffer-substring-no-properties (point-min) (point-max))))
+    url))
 
 (provide 'w3m-util)
 
