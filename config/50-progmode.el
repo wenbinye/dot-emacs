@@ -409,8 +409,7 @@ With argument, position cursor at end of buffer."
       (error "no file associated"))))
 
   (deh-require 'php-doc)
-  (setq simpletest-create-test-function 'simpletest-create-test-template)
-  ; (setq phpunit-create-test-function 'phpunit-create-test-template)
+  (setq phpunit-create-test-function 'phpunit-create-test-template)
   (setq php-imenu-generic-expression
         '(
           ("Private Methods"
@@ -448,12 +447,12 @@ With argument, position cursor at end of buffer."
     (c-set-offset 'arglist-close 'ywb-php-lineup-arglist-close)
     (c-set-offset 'knr-argdecl 'c-lineup-dont-change)
 
-    (deh-require 'simpletest)
-    (when (featurep 'simpletest)
-      (simpletest-mode 1)
-      (define-key simpletest-mode-map "\C-ctb" 'simpletest-switch)
-      (define-key simpletest-mode-map "\C-ctc" 'simpletest-create-test)
-      (define-key simpletest-mode-map "\C-ctr" 'simpletest-run-test))
+    (deh-require 'phpunit)
+    (when (featurep 'phpunit)
+      (phpunit-mode 1)
+      (define-key phpunit-mode-map "\C-ctb" 'phpunit-switch)
+      (define-key phpunit-mode-map "\C-ctc" 'phpunit-create-test)
+      (define-key phpunit-mode-map "\C-ctr" 'phpunit-run-test))
     ;; (deh-require 'phpunit
     ;;   (phpunit-mode 1)
     ;;   (define-key phpunit-mode-map "\C-ctb" 'phpunit-switch)
@@ -461,6 +460,7 @@ With argument, position cursor at end of buffer."
     ;;   (define-key phpunit-mode-map "\C-ctr" 'phpunit-run-test))
     (local-set-key (kbd "C-c C-v") 'my-geben-open-current-file)
     (local-set-key (kbd "C-c C-d") 'php-documentor-dwim)
+    (local-set-key (kbd "C-c C-s") 'ywb-php-generate-getters-setters)
     (local-set-key (kbd "C-M-a") 'beginning-of-defun)
     (local-set-key (kbd "C-M-e") 'end-of-defun)
     (local-set-key (kbd "C-c s") 'compile-dwim-compile))
