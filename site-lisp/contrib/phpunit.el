@@ -421,6 +421,7 @@ With prefix argument, create all test function in current class"
   "Run test for current function."
   (interactive "P")
   (let ((class (phpunit-file-class))
+        (dir default-directory)
         function file-type test-file test-function compile-command)
     (if class
         (progn
@@ -433,8 +434,9 @@ With prefix argument, create all test function in current class"
               (setq compile-command (format "phpunit \"%s\"" test-file))
             (setq test-function (if (eq file-type 'source) (phpunit-get-test-function (cdr function)) (cdr function)))
             (setq compile-command (format "phpunit --filter /::%s$/ \"%s\"" test-function test-file)))
-          (setq compilation-directory (phpunit-find-top-directory (phpunit-project-config 'test-directory)))
-          (call-interactively 'compile))
+          (cd (phpunit-find-top-directory (phpunit-project-config 'test-directory)))
+          (compilation-start compile-command nil)
+          (cd dir))
       (message "No test found"))))
 
 (define-minor-mode phpunit-mode
