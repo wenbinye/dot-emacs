@@ -69,6 +69,9 @@
   "^\\s-*\\(\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*\\)function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*("
   "Regexp that match function declaration")
 
+(defvar phpunit-command-options "--debug"
+  "Command option for phpunit")
+
 (defvar phpunit-project-config
   '(
     (get-source-class-function     . phpunit-get-source-class-suffix)
@@ -422,18 +425,20 @@ With prefix argument, create all test function in current class"
   (interactive "P")
   (let ((class (phpunit-file-class))
         (dir default-directory)
+        (namespace (phpunit-file-namespace))
+        (phpunit (concat "phpunit " phpunit-command-options))
         function file-type test-file test-function compile-command)
     (if class
         (progn
           (setq function (phpunit-function-ap)
                 file-type (phpunit-get-file-type class)
                 test-file (if (eq file-type 'source)
-                              (phpunit-get-test-file (phpunit-get-test-class class))
+                              (phpunit-get-test-file namespace (phpunit-get-test-class class))
                             buffer-file-name))
           (if all
-              (setq compile-command (format "phpunit \"%s\"" test-file))
+              (setq compile-command (format "%s \"%s\"" phpunit test-file))
             (setq test-function (if (eq file-type 'source) (phpunit-get-test-function (cdr function)) (cdr function)))
-            (setq compile-command (format "phpunit --filter /::%s$/ \"%s\"" test-function test-file)))
+            (setq compile-command (format "%s --filter /::%s/ \"%s\"" phpunit test-function test-file)))
           (cd (phpunit-find-top-directory (phpunit-project-config 'test-directory)))
           (compilation-start compile-command nil)
           (cd dir))
