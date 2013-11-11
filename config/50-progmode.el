@@ -362,7 +362,7 @@ With argument, position cursor at end of buffer."
     (save-excursion
       (save-restriction
         (if (and mark-active transient-mark-mode)
-            (narrow-to-region begin end))
+            (narrow-to-region (region-beginning) (region-end)))
         (goto-char (point-min))
         (while (re-search-forward prop-re nil t)
           (setq props (cons (match-string 1) props)))

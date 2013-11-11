@@ -266,7 +266,6 @@ The file name equals to test class name + `test-file-extension'."
 
 (defun phpunit-load-config (&optional reload)
   "Load phpunit config"
-  (interactive "P")
   (when (or (not (local-variable-p 'phpunit-project-config)) reload)
     (make-local-variable 'phpunit-project-config)
     (let ((file (phpunit-find-top-directory phpunit-config-file)))
@@ -309,8 +308,8 @@ class %s extends %s
 
 (defun phpunit-get-source-namespace-tests (test-namespace)
   "remove \\Tests in test-namespace"
-  (when namespace
-    (replace-regexp-in-string "\\\\Tests\\\\" "\\" test-namespace)))
+  (when test-namespace
+    (replace-regexp-in-string "\\\\Tests" "\\\\" test-namespace)))
 
 (defun phpunit-create-test-1 (test-class test-file source-class source-file &optional other-window)
   (funcall (if other-window 'find-file-other-window 'find-file) test-file)
@@ -384,6 +383,7 @@ class %s extends %s
   "Create test method for current class.
 With prefix argument, create all test function in current class"
   (interactive "P")
+  (phpunit-load-config)
   (let ((class (phpunit-file-class)))
     (if (and class (eq (phpunit-get-file-type class) 'source))
         (let ((namespace (phpunit-file-namespace))
@@ -423,6 +423,7 @@ With prefix argument, create all test function in current class"
 (defun phpunit-run-test (&optional all)
   "Run test for current function."
   (interactive "P")
+  (phpunit-load-config)
   (let ((class (phpunit-file-class))
         (dir default-directory)
         (namespace (phpunit-file-namespace))
@@ -433,7 +434,7 @@ With prefix argument, create all test function in current class"
           (setq function (phpunit-function-ap)
                 file-type (phpunit-get-file-type class)
                 test-file (if (eq file-type 'source)
-                              (phpunit-get-test-file namespace (phpunit-get-test-class class))
+                              (phpunit-get-test-file (phpunit-get-test-namespace namespace) (phpunit-get-test-class class))
                             buffer-file-name))
           (if all
               (setq compile-command (format "%s \"%s\"" phpunit test-file))
