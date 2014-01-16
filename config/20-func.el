@@ -373,3 +373,13 @@
              (setq x (+ x step)))
          (setq x (+ x step)))
        (cons x y)))))
+
+(defun run-redis (host port)
+  (interactive "sRedis host (default localhost): \nsRedis port (default 6379): ")
+  (let ((buffer (get-buffer-create "*redis*"))
+        (redis-cli "redis-cli"))
+    (when (= (length host) 0) (setq host "localhost"))
+    (when (= (length port) 0) (setq port "6379"))
+    (pop-to-buffer buffer)
+    (unless (comint-check-proc buffer)
+      (make-comint-in-buffer "redis" buffer redis-cli nil "-h" host "-p" port))))
