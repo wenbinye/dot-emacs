@@ -3,7 +3,7 @@
 ;; Copyright 2006 Ye Wenbin
 ;;
 ;; Author: wenbinye@163.com
-;; Time-stamp: <Ye Wenbin 2007-12-07 21:31:43>
+;; Time-stamp: <Ye Wenbin 2014-01-16 09:27:23>
 ;; Version: $Id: list-processes+.el,v 1.1.1.1 2007-03-13 13:16:10 ywb Exp $
 ;; Keywords: 
 ;; X-URL: not distributed yet
@@ -40,51 +40,31 @@
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-k" 'list-processes-kill-process)
     (define-key map "\C-m" 'list-processes-goto-buffer)
-    (define-key map "G" 'list-processes+)
-    (define-key map "S" 'list-processes-sort)
     map))
 
 ;;;###autoload 
 (defun list-processes+ (&optional query-only)
   (interactive "P")
   (list-processes query-only)
-  (let ((procs (process-list))
-        (inhibit-read-only t))
-    (if query-only
-        (setq procs (remove-if-not 'process-query-on-exit-flag procs)))
-    (save-excursion
-      (set-buffer (get-buffer "*Process List*"))
-      (goto-char (point-min))
-      (forward-line 2)
-      (while (not (eobp))
-        (put-text-property (point)
-                           (progn
-                             (forward-line 1)
-                             (point)) 'process (car procs))
-        (setq procs (cdr procs)))
-      (use-local-map list-processes-mode-map))))
+  (pop-to-buffer (get-buffer "*Process List*"))
+  (use-local-map list-processes-mode-map))
 
-(defun list-processes-sort (&optional reverse)
-  (interactive "P")
-  (let ((inhibit-read-only t))
-    (save-excursion
-      (goto-char (point-min))
-      (forward-line 2)
-      (sort-lines reverse (point) (point-max)))))
+(defun list-processes-process-at-pos ()
+  (let ((ln (line-number-at-pos)))
+    (when (>= ln 1)
+      (car (nth (- ln 1) tabulated-list-entries)))))
 
 (defun list-processes-kill-process ()
   (interactive)
-  (let ((proc (get-text-property (point) 'process))
-        (pos (point)))
+  (let ((proc (list-processes-process-at-pos)))
     (when (and proc
                (y-or-n-p (format "Kill process %s? " (process-name proc))))
       (delete-process proc)
-      (list-processes+)
-      (goto-char pos))))
+      (list-processes+))))
 
 (defun list-processes-goto-buffer ()
   (interactive)
-  (let ((proc (get-text-property (point) 'process)))
+  (let ((proc (list-processes-process-at-pos)))
     (when proc
       (if (and (process-buffer proc)
                (buffer-live-p (process-buffer proc)))
