@@ -318,11 +318,11 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.jade$" . jade-mode))
   (add-to-list 'auto-mode-alist '("\\.coffee$" . coffee-mode))
   (add-to-list 'auto-mode-alist '("Cakefile" . coffee-mode))
-  (add-to-list 'auto-mode-alist '("\\.md$" . markdown-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\(md\\|markdown\\)$" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.wiki$" . trac-wiki-mode))
   (add-to-list 'auto-mode-alist '("\\.spec$" . rpm-spec-mode))
   (add-to-list 'auto-mode-alist '("\\.json?$" . js-mode))
-  (add-to-list 'auto-mode-alist '("\\.\\(pkg?\\|tt2\\|phtml\\)$" . html-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\(pkg?\\|tt2\\|phtml\\|volt\\)$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.proc?$" . sql-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(ya?ml\\|fb\\)$" . yaml-mode))
   (add-to-list 'auto-mode-alist '("\\.acd$" . acd-mode))
@@ -382,6 +382,7 @@ With argument, position cursor at end of buffer."
           (insert indent "public function set" (upcase-initials name) "($" name ")\n"
                   indent "{\n"
                   indent indent "$this->" prop " = $" name ";\n"
+                  indent indent "return $this;\n"
                   indent "}\n")))
       (kill-new (buffer-string)))))
 
@@ -477,3 +478,8 @@ With argument, position cursor at end of buffer."
       (ffap-locate-file name t ffap-php-path)))
   (add-to-list 'PC-include-file-path "/usr/share/php")
   (add-to-list 'ffap-alist '(php-mode . my-php-ffap-locate)))
+
+(add-hook 'js-mode-hook
+          (lambda()
+            (local-set-key "," 'self-insert-command)
+            (local-set-key ":" 'self-insert-command)))
