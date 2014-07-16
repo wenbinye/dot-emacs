@@ -141,7 +141,7 @@
     (mapc
      (lambda (c)
        (when (funcall filter c)
-         (insert c "\n"))
+         (insert (file-relative-name c) "\n"))
        (when (file-directory-p c)
          (ywb-insert-directory-recursive c reg filter)))
      (directory-files dir t reg))))
@@ -150,6 +150,7 @@
   (interactive "DList Directory: ")
   (let ((buffer (get-buffer-create "*files-list*")))
     (with-current-buffer buffer
+      (setq default-directory dir)
       (erase-buffer)
       (ywb-insert-directory-recursive dir "^[^.]+" 'file-regular-p)
       (local-set-key (kbd "C-c C-c") 'ywb-list-files)
