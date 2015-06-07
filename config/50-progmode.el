@@ -214,16 +214,20 @@ With argument, position cursor at end of buffer."
     )
   (defun my-java-mode-hook ()
     (c-set-style "java");
-    (setq c-basic-offset 4))
+    (setq c-basic-offset 4)
+    (local-set-key (kbd "C-c C-s") 'ywb-java-generate-getters-setters))
   (add-hook 'java-mode-hook 'my-java-mode-hook))
 
 (deh-section "javascript"
-  (autoload 'inferior-moz-switch-to-mozilla "moz" "MozRepl inferior mode" t)
-  (add-hook 'js-mode-hook 'moz-minor-mode)
-  (add-hook 'inferior-moz-hook 'pabbrev-mode)
-  (defun my-js2-mode-hook ()
-    (setq forward-sexp-function nil))
-  (add-hook 'js2-mode-hook 'my-js2-mode-hook))
+  (add-hook 'js-mode-hook 'js2-minor-mode)
+  (add-hook 'js2-mode-hook 'ac-js2-mode))
+
+;;   (autoload 'inferior-moz-switch-to-mozilla "moz" "MozRepl inferior mode" t)
+;;   (add-hook 'js-mode-hook 'moz-minor-mode)
+;;   (add-hook 'inferior-moz-hook 'pabbrev-mode)
+;;   (defun my-js2-mode-hook ()
+;;     (setq forward-sexp-function nil))
+;;   (add-hook 'js2-mode-hook 'my-js2-mode-hook))
 
 (deh-section "hla"
   (autoload 'hla-mode "hla-mode" "hla major mode" t)
@@ -313,9 +317,13 @@ With argument, position cursor at end of buffer."
   (autoload 'nginx-mode "nginx-mode" "Major mode for editing nginx configuration files." nil t)
   (autoload 'groovy-mode "groovy-mode" "Mode for editing groovy source files" t)
   (autoload 'run-groovy "inf-groovy" "Run an inferior Groovy process" t)
+  (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
+  (autoload 'confluence-edit-mode "confluence-edit" "confluence edit mode." t)
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
+  (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
+  (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))  
   (add-to-list 'auto-mode-alist '("\\.groovy\\'" . groovy-mode))
   (add-to-list 'auto-mode-alist '("\\.styl$" . sws-mode))
   (add-to-list 'auto-mode-alist '("\\.jade$" . jade-mode))
@@ -324,8 +332,8 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.\\(md\\|markdown\\)$" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.wiki$" . trac-wiki-mode))
   (add-to-list 'auto-mode-alist '("\\.spec$" . rpm-spec-mode))
-  (add-to-list 'auto-mode-alist '("\\.json?$" . js-mode))
-  (add-to-list 'auto-mode-alist '("\\.\\(pkg?\\|tt2\\|phtml\\|volt\\)$" . html-mode))
+  (add-to-list 'auto-mode-alist '("\\.json?$" . text-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\(pkg?\\|tt2\\|phtml\\|volt\\|vm\\)$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.proc?$" . sql-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(ya?ml\\|fb\\)$" . yaml-mode))
   (add-to-list 'auto-mode-alist '("\\.acd$" . acd-mode))
@@ -355,6 +363,65 @@ With argument, position cursor at end of buffer."
 (deh-section "php"
   (add-to-list 'interpreter-mode-alist '("php" . php-mode))
   (autoload 'geben "geben" "" t)
+
+(defun ywb-java-generate-bean-copy (from to)
+  (interactive "sFrom: \nsTo: ")
+  (let ((prop-re "\\(?:protected\\|private\\)\\s-+[a-zA-Z0-9_.]+\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\)\\s-*[;=]")
+         props name)
+    (save-excursion
+      (save-restriction
+        (if (and mark-active transient-mark-mode)
+            (narrow-to-region (region-beginning) (region-end)))
+        (goto-char (point-min))
+        (while (re-search-forward prop-re nil t)
+          (setq props (cons (match-string 1) props)))))
+    (with-temp-buffer
+      (dolist (prop (nreverse props))
+        (setq name (upcase-initials prop))
+        (insert from ".set" name "(" to ".get" name "());\n"))
+      (kill-new (buffer-string)))))
+
+(defun ywb-java-align-fields (from to)
+  (interactive "r")
+  (align-regexp from to "\\(\\s-*\\)\\s-+[_a-zA-Z][a-zA-Z0-9_]*\\s-*;"))
+
+(defun ywb-java-get-properties ()
+  (interactive)
+  (let ((prop-re "\\(?:protected\\|public\\|private\\)\\s-+\\([a-zA-Z0-9_.]+\\(?:<.*?>\\)?\\)\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\)\\s-*[;=]")
+        props type name pos comment)
+    (save-excursion
+      (save-restriction
+        (if (and mark-active transient-mark-mode)
+            (narrow-to-region (region-beginning) (region-end)))
+        (goto-char (point-min))
+        (while (re-search-forward prop-re nil t)
+          (setq type (match-string 1)
+                name (match-string 2))
+          (save-excursion
+            (forward-line -1)
+            (setq pos (line-end-position)
+                  comment "")
+            (while (re-search-forward "^\\s-*\\*" (line-end-position) t)
+              (forward-line -1))
+            (when (re-search-forward "/\\*\\*" pos t)
+              (setq comment (buffer-substring (point) pos))
+              (with-temp-buffer
+                (insert comment)
+                (goto-char (point-min))
+                (while (re-search-forward "^\\s-*\\/?\\*\\/?\\s-*" nil t)
+                  (replace-match "" nil nil))
+                (goto-char (point-max))
+                (when (re-search-backward "\\*\\/\\s-*" nil t)
+                  (replace-match "" nil nil))
+                (setq comment (replace-regexp-in-string "[\n]" "" (buffer-string)))
+                (setq comment (replace-regexp-in-string "^\\s-*\\(.*?\\)\\s-*$" "\\1" comment)))))
+        (setq props (cons (list name type comment) props)))))
+    (with-temp-buffer
+      (dolist (prop (nreverse props))
+        ;; (insert " - " (car prop) ": " (cadr prop) " " (nth 2 prop) "\n")
+        (insert (car prop) "\t" (cadr prop) "\t" (nth 2 prop) "\n")
+        )
+      (kill-new (buffer-string)))))
 
 (defun ywb-php-generate-getters-setters ()
   (interactive)
@@ -386,6 +453,52 @@ With argument, position cursor at end of buffer."
                   indent "{\n"
                   indent indent "$this->" prop " = $" name ";\n"
                   indent indent "return $this;\n"
+                  indent "}\n")))
+      (kill-new (buffer-string)))))
+
+(defun ywb-java-generate-getters-setters (&optional return-this)
+  (interactive "P")
+  (let ((prop-re "\\(?:protected\\|private\\)\\s-+\\(.*?\\)\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\);")
+        (class-re "class\\s-+\\(\\S-+\\)")
+        (method-re "public\\s-+.*?\\s-+get\\([a-zA-Z0-9_]+\\)")
+        (indent "    ")
+        exists-getters props name classname)
+    (save-excursion
+      (save-restriction
+        (if (and mark-active transient-mark-mode)
+            (narrow-to-region (region-beginning) (region-end)))
+        (goto-char (point-min))
+        (while (re-search-forward prop-re nil t)
+          (setq props (cons (cons (match-string 2) (match-string 1)) props)))
+        (widen)
+        (goto-char (point-min))
+        (when (re-search-forward class-re nil t)
+          (setq classname (match-string 1)))
+        (while (re-search-forward method-re nil t)
+          (add-to-list 'exists-getters (cons (downcase (match-string 1)) t)))))
+    (with-temp-buffer
+      (dolist (prop (nreverse props))
+        (setq name (ywb-php-normalize-prop (car prop)))
+        (when (not (assoc (downcase name) exists-getters))
+          (insert "\n")
+          (insert indent "/**\n"
+                  indent " * Getter method for property <tt>" (car prop) "</tt>.\n"
+                  indent " *\n"
+                  indent " * @return property value of " (car prop) "\n"
+                  indent " */\n")
+          (insert indent "public " (cdr prop) " get" (upcase-initials name) "() {\n"
+                  indent indent "return " (car prop) ";\n"
+                  indent "}\n\n")
+          (insert indent "/**\n"
+                  indent " * Setter method for property <tt>" (car prop) "</tt>.\n"
+                  indent " *\n"
+                  indent " * @param " (car prop) " value to be assigned to property " (car prop) "\n"
+                  indent " */\n")
+          (insert indent "public " (if return-this classname "void")  " set" (upcase-initials name) "(" (cdr prop) " "  name ") {\n"
+                  indent indent "this." (car prop) " = " name ";\n"
+                  (if return-this
+                      (concat indent indent "return this;\n")
+                    "")
                   indent "}\n")))
       (kill-new (buffer-string)))))
 

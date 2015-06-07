@@ -81,7 +81,7 @@
     (get-test-file-function        . phpunit-get-test-file-simple)
     (get-test-namespace-function   . identity)
     (get-file-type-function        . phpunit-get-file-type-simple)
-    (source-directory      . "lib")
+    (source-directory      . "src")
     (test-directory        . "tests")
     (source-file-extension . ".php")
     (test-file-extension   . ".php")

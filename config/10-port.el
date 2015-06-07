@@ -2,11 +2,6 @@
 ;; This config is for portable. The platform relate configuration
 ;; should appear here.
 
-(deh-section "env"
-  (setenv "GIT_PAGER" "cat")
-  (setenv "PAGER" "cat")
-  (setenv "EDITOR" "emacsclient"))
-
 (deh-section "window-system"
   (when (eq window-system 'x)
     ;; no scroll bar
@@ -86,7 +81,7 @@
         (setq find-function-C-source-directory "/home/ywb/softwares/sources/emacs-23.1/src")
       (setq find-function-C-source-directory "/home/ywb/downloads/cvs.savannah.gnu.org/emacs-22/src"))))
 
-;; (deh-section "emacs23"
-;;   (require 'fenc nil t)
-;;   (when (eq window-system 'x)
-;;     (load (expand-file-name "my-fontset.el" ywb-config-dir))))
+(deh-section "emacs23"
+  ;; (require 'fenc nil t)
+  (when (eq window-system 'x)
+    (load (expand-file-name "my-fontset.el" ywb-config-dir))))

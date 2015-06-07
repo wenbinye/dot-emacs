@@ -146,13 +146,16 @@
          (ywb-insert-directory-recursive c reg filter)))
      (directory-files dir t reg))))
 
+;; 新增去除 java 文件
 (defun ywb-list-directory-recursive (dir)
   (interactive "DList Directory: ")
-  (let ((buffer (get-buffer-create "*files-list*")))
+  (let ((buffer (get-buffer-create "*files-list*"))
+        (filter (lambda (file) (and (file-regular-p file)
+                                    (not (string-match "\\(\\(^\\|/\\)target/\\|\\.iml$\\)" file))))))
     (with-current-buffer buffer
       (setq default-directory dir)
       (erase-buffer)
-      (ywb-insert-directory-recursive dir "^[^.]+" 'file-regular-p)
+      (ywb-insert-directory-recursive dir "^[^.]+" filter)
       (local-set-key (kbd "C-c C-c") 'ywb-list-files)
       (display-buffer (current-buffer))
       (message "Press C-c C-c to convert to dired"))))

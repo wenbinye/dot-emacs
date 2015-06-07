@@ -26,8 +26,7 @@
   (setq dired-dwim-target t)
 
   (deh-section "dired-assoc"
-    (dolist (file `(("acroread" "pdf")
-                    ("xpdf" "pdf")
+    (dolist (file `(("xpdf" "pdf")
                     ("xdvi" "dvi")
                     ("dvipdf" "dvi")
                     ("zxpdf" "pdf.gz")
@@ -765,8 +764,4 @@ If the flag is set, only complete with local files."
 
 (deh-section "el-get"
   (add-to-list 'load-path "~/.emacs.d/el-get/el-get")
-  (autoload 'el-get-install "el-get" "install elisp package" t)
-  (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
-  (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
-  (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))  
   )
