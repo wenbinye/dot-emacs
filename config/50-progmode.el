@@ -324,7 +324,7 @@ With argument, position cursor at end of buffer."
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
-  (add-to-list 'auto-mode-alist '("\\.scss$" . scss-mode)))
+  (add-to-list 'auto-mode-alist '("\\.scss$" . scss-mode))
   (add-to-list 'auto-mode-alist '("\\.zep$" . zephir-mode))
   (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
   (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))  
