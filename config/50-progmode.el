@@ -303,6 +303,7 @@ With argument, position cursor at end of buffer."
   (autoload 'php-documentor-dwim "php-documentor" "php doc helper" t)
   (autoload 'visual-basic-mode "vb-mode" "Visual Basic Mode" t)
   (autoload 'pir-mode "pir-mode" nil t)
+  (autoload 'zephir-mode "zephir-mode" nil t)
   (autoload 'pod-mode "pod-mode" "A major mode to edit pod" t)
   (autoload 'xs-mode "xs-mode" "Major mode for XS files" t)
   (autoload 'acd-mode "acd" "Major mode to edit acd files" t)
@@ -319,9 +320,12 @@ With argument, position cursor at end of buffer."
   (autoload 'run-groovy "inf-groovy" "Run an inferior Groovy process" t)
   (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
   (autoload 'confluence-edit-mode "confluence-edit" "confluence edit mode." t)
+  (autoload 'scss-mode "scss-mode" "scss mode." t)
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
+  (add-to-list 'auto-mode-alist '("\\.scss$" . scss-mode)))
+  (add-to-list 'auto-mode-alist '("\\.zep$" . zephir-mode))
   (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
   (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))  
   (add-to-list 'auto-mode-alist '("\\.groovy\\'" . groovy-mode))

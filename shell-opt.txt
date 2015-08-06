@@ -12,3 +12,4 @@ swig -chicken -csharp  -guile -java -mzscheme -ocaml  -perl -php -pike -python  
 tcc -run
 darcs help  add remove  mv  replace revert  unrevert whatsnew  record unrecord amend-record  resolve tag setpref  rollback diff changes annotate dist  trackdown query  pull unpull obliterate  push send apply get put initialize optimize check repair
 git add bisect branch checkout clone commit diff fetch grep init log merge mv pull push rebase reset rm show status tag config
+composer dumpautoload init update install create-project validate status show selfupdate require global
