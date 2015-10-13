@@ -49,5 +49,4 @@ Example:
                   ))
   (add-to-list 'package-archives source t))
 (package-initialize)
-
-(require 'solarized-dark-theme)
+(deh-require 'solarized-dark-theme)
