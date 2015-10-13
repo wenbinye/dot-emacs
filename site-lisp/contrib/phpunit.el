@@ -414,7 +414,7 @@ With prefix argument, create all test function in current class"
                       (goto-char class-end)
                       (backward-char 1)
                       (delete-region (progn (skip-chars-backward " \n\t") (point)) (1- class-end))
-                      (insert (format "\n\n    function %s()\n    {\n        \n    }\n" function))
+                      (insert (format "\n\n    public function %s()\n    {\n        \n    }\n" function))
                       (setq pos (- (point) 7))))))
             (message "No function to create test"))
           (if pos (goto-char pos)))

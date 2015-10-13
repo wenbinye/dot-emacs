@@ -98,7 +98,10 @@
   (interactive)
   (require 'autoload)
   (let ((generated-autoload-file (expand-file-name "100-loaddefs.el" ywb-config-dir)))
-    (update-directory-autoloads ywb-config-dir (expand-file-name "contrib" ywb-site-lisp-dir))))
+    (update-directory-autoloads
+     ywb-config-dir
+     (expand-file-name "contrib" ywb-site-lisp-dir)
+     (expand-file-name "progmodes" ywb-site-lisp-dir))))
 
 (defmacro my (&rest args)
   `(mapc 'make-local-variable ',args))

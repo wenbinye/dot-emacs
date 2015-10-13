@@ -328,7 +328,7 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.zep$" . zephir-mode))
   (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
   (add-to-list 'interpreter-mode-alist '("lua" . lua-mode))  
-  (add-to-list 'auto-mode-alist '("\\.groovy\\'" . groovy-mode))
+  (add-to-list 'auto-mode-alist '("\\.\\(groovy\\|gradle\\)\\'" . groovy-mode))
   (add-to-list 'auto-mode-alist '("\\.styl$" . sws-mode))
   (add-to-list 'auto-mode-alist '("\\.jade$" . jade-mode))
   (add-to-list 'auto-mode-alist '("\\.coffee$" . coffee-mode))

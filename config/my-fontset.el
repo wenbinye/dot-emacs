@@ -75,7 +75,7 @@
   (cond
     ((eq window-system 'x)
     (setq default-font "Ubuntu Mono 16"
-          zh-font (font-spec :family "Sans" :size 20)))
+          zh-font (font-spec :family "Sans" :size 16)))
    ((eq window-system 'w32)
     (setq default-font "Consolas 11"
           zh-font (font-spec :family "Microsoft Yahei" :size 14))))
