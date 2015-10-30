@@ -50,4 +50,6 @@ Example:
   (add-to-list 'package-archives source t))
 (package-initialize)
 
-(require 'solarized-dark-theme)
+(require 'color-theme)
+(color-theme-solarized)
+(put 'set-goal-column 'disabled nil)

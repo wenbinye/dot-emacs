@@ -186,7 +186,9 @@
   (or dir (setq dir (expand-file-name default-directory)))
   (let ((thefile (expand-file-name file dir)))
     (if (file-exists-p thefile)
-        thefile
+        (if (file-directory-p thefile)
+            thefile
+          (file-name-directory thefile))
       (setq pdir (directory-file-name (file-name-directory dir)))
       (if (string= pdir dir)
           nil
@@ -440,7 +442,9 @@ With prefix argument, create all test function in current class"
               (setq compile-command (format "%s \"%s\"" phpunit test-file))
             (setq test-function (if (eq file-type 'source) (phpunit-get-test-function (cdr function)) (cdr function)))
             (setq compile-command (format "%s --filter /::%s/ \"%s\"" phpunit test-function test-file)))
-          (cd (phpunit-find-top-directory (phpunit-project-config 'test-directory)))
+          (cd (or (phpunit-find-top-directory "phpunit.xml.dist")
+                  (phpunit-find-top-directory "phpunit.xml")
+                  (phpunit-find-top-directory (phpunit-project-config 'test-directory))))
           (compilation-start compile-command nil)
           (cd dir))
       (message "No test found"))))
