@@ -210,17 +210,115 @@ With argument, position cursor at end of buffer."
     (interactive)
     (require 'cedet)
     (require 'jde)
-    (jde-mode)
-    )
+    (jde-mode))
+  (defun ywb-java-generate-bean-copy (from to)
+    (interactive "sFrom: \nsTo: ")
+    (let ((prop-re "\\(?:protected\\|private\\)\\s-+[a-zA-Z0-9_.]+\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\)\\s-*[;=]")
+          props name)
+      (save-excursion
+        (save-restriction
+          (if (and mark-active transient-mark-mode)
+              (narrow-to-region (region-beginning) (region-end)))
+          (goto-char (point-min))
+          (while (re-search-forward prop-re nil t)
+            (setq props (cons (match-string 1) props)))))
+      (with-temp-buffer
+        (dolist (prop (nreverse props))
+          (setq name (upcase-initials prop))
+          (insert from ".set" name "(" to ".get" name "());\n"))
+        (kill-new (buffer-string)))))
+
+  (defun ywb-java-align-fields (from to)
+    (interactive "r")
+    (align-regexp from to "\\(\\s-*\\)\\s-+[_a-zA-Z][a-zA-Z0-9_]*\\s-*;"))
+
+  (defun ywb-java-get-properties ()
+    (interactive)
+    (let ((prop-re "\\(?:protected\\|public\\|private\\)\\s-+\\([a-zA-Z0-9_.]+\\(?:<.*?>\\)?\\)\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\)\\s-*[;=]")
+          props type name pos comment)
+      (save-excursion
+        (save-restriction
+          (if (and mark-active transient-mark-mode)
+              (narrow-to-region (region-beginning) (region-end)))
+          (goto-char (point-min))
+          (while (re-search-forward prop-re nil t)
+            (setq type (match-string 1)
+                  name (match-string 2))
+            (save-excursion
+              (forward-line -1)
+              (setq pos (line-end-position)
+                    comment "")
+              (while (re-search-forward "^\\s-*\\*" (line-end-position) t)
+                (forward-line -1))
+              (when (re-search-forward "/\\*\\*" pos t)
+                (setq comment (buffer-substring (point) pos))
+                (with-temp-buffer
+                  (insert comment)
+                  (goto-char (point-min))
+                  (while (re-search-forward "^\\s-*\\/?\\*\\/?\\s-*" nil t)
+                    (replace-match "" nil nil))
+                  (goto-char (point-max))
+                  (when (re-search-backward "\\*\\/\\s-*" nil t)
+                    (replace-match "" nil nil))
+                  (setq comment (replace-regexp-in-string "[\n]" "" (buffer-string)))
+                  (setq comment (replace-regexp-in-string "^\\s-*\\(.*?\\)\\s-*$" "\\1" comment)))))
+            (setq props (cons (list name type comment) props)))))
+      (with-temp-buffer
+        (dolist (prop (nreverse props))
+          ;; (insert " - " (car prop) ": " (cadr prop) " " (nth 2 prop) "\n")
+          (insert (car prop) "\t" (cadr prop) "\t" (nth 2 prop) "\n"))
+        (kill-new (buffer-string)))))
+
+  (defun ywb-java-generate-getters-setters (&optional return-this)
+    (interactive "P")
+    (let ((prop-re "\\(?:protected\\|private\\)\\s-+\\(.*?\\)\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\);")
+          (class-re "class\\s-+\\(\\S-+\\)")
+          (method-re "public\\s-+.*?\\s-+get\\([a-zA-Z0-9_]+\\)")
+          (indent "    ")
+          exists-getters props name classname)
+      (save-excursion
+        (save-restriction
+          (if (and mark-active transient-mark-mode)
+              (narrow-to-region (region-beginning) (region-end)))
+          (goto-char (point-min))
+          (while (re-search-forward prop-re nil t)
+            (setq props (cons (cons (match-string 2) (match-string 1)) props)))
+          (widen)
+          (goto-char (point-min))
+          (when (re-search-forward class-re nil t)
+            (setq classname (match-string 1)))
+          (while (re-search-forward method-re nil t)
+            (add-to-list 'exists-getters (cons (downcase (match-string 1)) t)))))
+      (with-temp-buffer
+        (dolist (prop (nreverse props))
+          (setq name (ywb-php-normalize-prop (car prop)))
+          (when (not (assoc (downcase name) exists-getters))
+            (insert "\n")
+            (insert indent "/**\n"
+                    indent " * Getter method for property <tt>" (car prop) "</tt>.\n"
+                    indent " *\n"
+                    indent " * @return property value of " (car prop) "\n"
+                    indent " */\n")
+            (insert indent "public " (cdr prop) " get" (upcase-initials name) "() {\n"
+                    indent indent "return " (car prop) ";\n"
+                    indent "}\n\n")
+            (insert indent "/**\n"
+                    indent " * Setter method for property <tt>" (car prop) "</tt>.\n"
+                    indent " *\n"
+                    indent " * @param " (car prop) " value to be assigned to property " (car prop) "\n"
+                    indent " */\n")
+            (insert indent "public " (if return-this classname "void")  " set" (upcase-initials name) "(" (cdr prop) " "  name ") {\n"
+                    indent indent "this." (car prop) " = " name ";\n"
+                    (if return-this
+                        (concat indent indent "return this;\n")
+                      "")
+                    indent "}\n")))
+        (kill-new (buffer-string)))))  
   (defun my-java-mode-hook ()
     (c-set-style "java");
     (setq c-basic-offset 4)
     (local-set-key (kbd "C-c C-s") 'ywb-java-generate-getters-setters))
   (add-hook 'java-mode-hook 'my-java-mode-hook))
-
-(deh-section "javascript"
-  (add-hook 'js-mode-hook 'js2-minor-mode)
-  (add-hook 'js2-mode-hook 'ac-js2-mode))
 
 ;;   (autoload 'inferior-moz-switch-to-mozilla "moz" "MozRepl inferior mode" t)
 ;;   (add-hook 'js-mode-hook 'moz-minor-mode)
@@ -324,6 +422,7 @@ With argument, position cursor at end of buffer."
   (autoload 'oddmuse-mode "oddmuse" nil t))
 
 (deh-section "auto-mode"
+  (add-to-list 'auto-mode-alist '("\\(Gemfile\\|Capfile\\|Rakefile\\|\\.rb\\|\\.rake\\)$" . ruby-mode))
   (add-to-list 'auto-mode-alist '("\\.scss$" . scss-mode))
   (add-to-list 'auto-mode-alist '("\\.zep$" . zephir-mode))
   (add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
@@ -336,7 +435,6 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.\\(md\\|markdown\\)$" . markdown-mode))
   (add-to-list 'auto-mode-alist '("\\.wiki$" . trac-wiki-mode))
   (add-to-list 'auto-mode-alist '("\\.spec$" . rpm-spec-mode))
-  (add-to-list 'auto-mode-alist '("\\.json?$" . text-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(pkg?\\|tt2\\|phtml\\|volt\\|vm\\)$" . html-mode))
   (add-to-list 'auto-mode-alist '("\\.proc?$" . sql-mode))
   (add-to-list 'auto-mode-alist '("\\.\\(ya?ml\\|fb\\)$" . yaml-mode))
@@ -364,242 +462,87 @@ With argument, position cursor at end of buffer."
   (add-to-list 'auto-mode-alist '("\\.thrift" . thrift-mode))
   (add-to-list 'auto-mode-alist '("\\.twiki$" . oddmuse-mode)))
 
-(deh-section "php"
-  (add-to-list 'interpreter-mode-alist '("php" . php-mode))
-  (autoload 'geben "geben" "" t)
-
-(defun ywb-java-generate-bean-copy (from to)
-  (interactive "sFrom: \nsTo: ")
-  (let ((prop-re "\\(?:protected\\|private\\)\\s-+[a-zA-Z0-9_.]+\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\)\\s-*[;=]")
-         props name)
-    (save-excursion
-      (save-restriction
-        (if (and mark-active transient-mark-mode)
-            (narrow-to-region (region-beginning) (region-end)))
-        (goto-char (point-min))
-        (while (re-search-forward prop-re nil t)
-          (setq props (cons (match-string 1) props)))))
-    (with-temp-buffer
-      (dolist (prop (nreverse props))
-        (setq name (upcase-initials prop))
-        (insert from ".set" name "(" to ".get" name "());\n"))
-      (kill-new (buffer-string)))))
-
-(defun ywb-java-align-fields (from to)
-  (interactive "r")
-  (align-regexp from to "\\(\\s-*\\)\\s-+[_a-zA-Z][a-zA-Z0-9_]*\\s-*;"))
-
-(defun ywb-java-get-properties ()
-  (interactive)
-  (let ((prop-re "\\(?:protected\\|public\\|private\\)\\s-+\\([a-zA-Z0-9_.]+\\(?:<.*?>\\)?\\)\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\)\\s-*[;=]")
-        props type name pos comment)
-    (save-excursion
-      (save-restriction
-        (if (and mark-active transient-mark-mode)
-            (narrow-to-region (region-beginning) (region-end)))
-        (goto-char (point-min))
-        (while (re-search-forward prop-re nil t)
-          (setq type (match-string 1)
-                name (match-string 2))
-          (save-excursion
-            (forward-line -1)
-            (setq pos (line-end-position)
-                  comment "")
-            (while (re-search-forward "^\\s-*\\*" (line-end-position) t)
-              (forward-line -1))
-            (when (re-search-forward "/\\*\\*" pos t)
-              (setq comment (buffer-substring (point) pos))
-              (with-temp-buffer
-                (insert comment)
-                (goto-char (point-min))
-                (while (re-search-forward "^\\s-*\\/?\\*\\/?\\s-*" nil t)
-                  (replace-match "" nil nil))
-                (goto-char (point-max))
-                (when (re-search-backward "\\*\\/\\s-*" nil t)
-                  (replace-match "" nil nil))
-                (setq comment (replace-regexp-in-string "[\n]" "" (buffer-string)))
-                (setq comment (replace-regexp-in-string "^\\s-*\\(.*?\\)\\s-*$" "\\1" comment)))))
-        (setq props (cons (list name type comment) props)))))
-    (with-temp-buffer
-      (dolist (prop (nreverse props))
-        ;; (insert " - " (car prop) ": " (cadr prop) " " (nth 2 prop) "\n")
-        (insert (car prop) "\t" (cadr prop) "\t" (nth 2 prop) "\n")
-        )
-      (kill-new (buffer-string)))))
-
-(defun ywb-php-generate-getters-setters ()
-  (interactive)
-  (let ((prop-re "\\(?:protected\\|private\\)\\s-+\\$\\([_a-zA-Z][a-zA-Z0-9_]+\\)")
-        (method-re "public\\s-+function\\s-+get\\([a-zA-Z0-9_]+\\)")
-        (indent "    ")
-        exists-getters props name)
-    (save-excursion
-      (save-restriction
-        (if (and mark-active transient-mark-mode)
-            (narrow-to-region (region-beginning) (region-end)))
-        (goto-char (point-min))
-        (while (re-search-forward prop-re nil t)
-          (setq props (cons (match-string 1) props)))
-        (widen)
-        (goto-char (point-min))
-        (while (re-search-forward method-re nil t)
-          (add-to-list 'exists-getters (cons (downcase (match-string 1)) t)))))
-    (with-temp-buffer
-      (dolist (prop (nreverse props))
-        (setq name (ywb-php-normalize-prop prop))
-        (when (not (assoc (downcase name) exists-getters))
-          (insert "\n")
-          (insert indent "public function get" (upcase-initials name) "()\n"
-                  indent "{\n"
-                  indent indent "return $this->" prop ";\n"
-                  indent "}\n\n")
-          (insert indent "public function set" (upcase-initials name) "($" name ")\n"
-                  indent "{\n"
-                  indent indent "$this->" prop " = $" name ";\n"
-                  indent indent "return $this;\n"
-                  indent "}\n")))
-      (kill-new (buffer-string)))))
-
-(defun ywb-java-generate-getters-setters (&optional return-this)
-  (interactive "P")
-  (let ((prop-re "\\(?:protected\\|private\\)\\s-+\\(.*?\\)\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\);")
-        (class-re "class\\s-+\\(\\S-+\\)")
-        (method-re "public\\s-+.*?\\s-+get\\([a-zA-Z0-9_]+\\)")
-        (indent "    ")
-        exists-getters props name classname)
-    (save-excursion
-      (save-restriction
-        (if (and mark-active transient-mark-mode)
-            (narrow-to-region (region-beginning) (region-end)))
-        (goto-char (point-min))
-        (while (re-search-forward prop-re nil t)
-          (setq props (cons (cons (match-string 2) (match-string 1)) props)))
-        (widen)
-        (goto-char (point-min))
-        (when (re-search-forward class-re nil t)
-          (setq classname (match-string 1)))
-        (while (re-search-forward method-re nil t)
-          (add-to-list 'exists-getters (cons (downcase (match-string 1)) t)))))
-    (with-temp-buffer
-      (dolist (prop (nreverse props))
-        (setq name (ywb-php-normalize-prop (car prop)))
-        (when (not (assoc (downcase name) exists-getters))
-          (insert "\n")
-          (insert indent "/**\n"
-                  indent " * Getter method for property <tt>" (car prop) "</tt>.\n"
-                  indent " *\n"
-                  indent " * @return property value of " (car prop) "\n"
-                  indent " */\n")
-          (insert indent "public " (cdr prop) " get" (upcase-initials name) "() {\n"
-                  indent indent "return " (car prop) ";\n"
-                  indent "}\n\n")
-          (insert indent "/**\n"
-                  indent " * Setter method for property <tt>" (car prop) "</tt>.\n"
-                  indent " *\n"
-                  indent " * @param " (car prop) " value to be assigned to property " (car prop) "\n"
-                  indent " */\n")
-          (insert indent "public " (if return-this classname "void")  " set" (upcase-initials name) "(" (cdr prop) " "  name ") {\n"
-                  indent indent "this." (car prop) " = " name ";\n"
-                  (if return-this
-                      (concat indent indent "return this;\n")
-                    "")
-                  indent "}\n")))
-      (kill-new (buffer-string)))))
-
-(defun ywb-php-normalize-prop (prop)
-  (let ((name (mapconcat 'upcase-initials (split-string prop "_") "")))
-    (concat (downcase (substring name 0 1)) (substring name 1))))
-
-(defun my-geben-open-current-file ()
-  (interactive)
-  (let ((bufs (buffer-list))
-        (file buffer-file-name)
-        (line (line-number-at-pos))
-        buf session new-buf)
-    (if file
-        (progn
-          (while (and (not session)
-                      bufs)
-            (setq buf (car bufs)
-                  bufs (cdr bufs)
-                  session (buffer-local-value 'geben-current-session buf)))
-          (if session
-              (with-current-buffer buf
-                (geben-open-file (concat "file://" file)))
-            (error "no geben session started")))
-      (error "no file associated"))))
-
-  (deh-require 'php-doc)
-  (setq phpunit-create-test-function 'phpunit-create-test-template)
-  (setq php-imenu-generic-expression
-        '(
-          ("Private Methods"
-           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?private\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
-          ("Protected Methods"
-           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?protected\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
-          ("Public Methods"
-           "^\\s-*\\(?:\\(?:abstract\\|final\\)\\s-+\\)?public\\s-+\\(?:static\\s-+\\)?function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
-          ("Classes"
-           "^\\s-*class\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*" 1)
-          (nil
-           "^\\s-*\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1)
-          ))
-  (add-to-list 'magic-mode-alist '("\\`<\\?php" . php-mode))
-  (add-to-list 'interpreter-mode-alist '("php" . php-mode))
-  (defun my-php-mode-hook ()
-    (tempo-use-tag-list 'tempo-php-tags)
-    (font-lock-add-keywords nil gtkdoc-font-lock-keywords)
-    (setq php-beginning-of-defun-regexp "^\\s-*\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(")
-    (when (featurep 'php-doc)
-      (local-set-key "\t" 'php-doc-complete-function)
-      (set (make-local-variable 'eldoc-documentation-function)
-           'php-doc-eldoc-function)
-      (eldoc-mode 1))
-    ;; Fix php array indentation
-    (defun ywb-php-lineup-arglist-intro (langelem)
-      (save-excursion
-        (goto-char (cdr langelem))
-        (vector (+ (current-column) c-basic-offset))))
-    (defun ywb-php-lineup-arglist-close (langelem)
-      (save-excursion
-        (goto-char (cdr langelem))
-        (vector (current-column))))
-    (c-set-offset 'arglist-intro 'ywb-php-lineup-arglist-intro)
-    (c-set-offset 'arglist-close 'ywb-php-lineup-arglist-close)
-    (c-set-offset 'knr-argdecl 'c-lineup-dont-change)
-
-    (deh-require 'phpunit)
-    (when (featurep 'phpunit)
-      (phpunit-mode 1)
-      (define-key phpunit-mode-map "\C-ctb" 'phpunit-switch)
-      (define-key phpunit-mode-map "\C-ctc" 'phpunit-create-test)
-      (define-key phpunit-mode-map "\C-ctr" 'phpunit-run-test))
-    ;; (deh-require 'phpunit
-    ;;   (phpunit-mode 1)
-    ;;   (define-key phpunit-mode-map "\C-ctb" 'phpunit-switch)
-    ;;   (define-key phpunit-mode-map "\C-ctc" 'phpunit-create-test)
-    ;;   (define-key phpunit-mode-map "\C-ctr" 'phpunit-run-test))
-    (local-set-key (kbd "C-c C-v") 'my-geben-open-current-file)
-    (local-set-key (kbd "C-c C-d") 'php-documentor-dwim)
-    (local-set-key (kbd "C-c C-s") 'ywb-php-generate-getters-setters)
-    (local-set-key (kbd "C-M-a") 'beginning-of-defun)
-    (local-set-key (kbd "C-M-e") 'end-of-defun)
-    (local-set-key (kbd "C-c s") 'compile-dwim-compile))
-  (add-hook 'php-mode-hook 'my-php-mode-hook)
-  (defvar ffap-php-path
-    (let ((include-path
-           (shell-command-to-string "php -r 'echo get_include_path();'")))
-      (split-string include-path ":"))
-    "php include path")
-  (defun my-php-ffap-locate (name)
-    "Find php require or include files"
-    (if (string-match "^[a-zA-Z0-9_]+$" name)
-        (ffap-locate-file (replace-regexp-in-string "_" "/" name) '(".class.php" ".php") ffap-php-path)
-      (ffap-locate-file name t ffap-php-path)))
-  (add-to-list 'PC-include-file-path "/usr/share/php")
-  (add-to-list 'ffap-alist '(php-mode . my-php-ffap-locate)))
-
 (add-hook 'js-mode-hook
           (lambda()
             (local-set-key "," 'self-insert-command)
             (local-set-key ":" 'self-insert-command)))
+
+(deh-section "php"
+  (autoload 'geben "geben" "" t)
+  (defun ywb-php-generate-getters-setters ()
+    (interactive)
+    (let ((prop-re "\\(?:protected\\|private\\)\\s-+\\$\\([_a-zA-Z][a-zA-Z0-9_]+\\)")
+          (method-re "public\\s-+function\\s-+get\\([a-zA-Z0-9_]+\\)")
+          (indent "    ")
+          exists-getters props name)
+      (save-excursion
+        (save-restriction
+          (if (and mark-active transient-mark-mode)
+              (narrow-to-region (region-beginning) (region-end)))
+          (goto-char (point-min))
+          (while (re-search-forward prop-re nil t)
+            (setq props (cons (match-string 1) props)))
+          (widen)
+          (goto-char (point-min))
+          (while (re-search-forward method-re nil t)
+            (add-to-list 'exists-getters (cons (downcase (match-string 1)) t)))))
+      (with-temp-buffer
+        (dolist (prop (nreverse props))
+          (setq name (ywb-php-normalize-prop prop))
+          (when (not (assoc (downcase name) exists-getters))
+            (insert "\n")
+            (insert indent "public function get" (upcase-initials name) "()\n"
+                    indent "{\n"
+                    indent indent "return $this->" prop ";\n"
+                    indent "}\n\n")
+            (insert indent "public function set" (upcase-initials name) "($" name ")\n"
+                    indent "{\n"
+                    indent indent "$this->" prop " = $" name ";\n"
+                    indent indent "return $this;\n"
+                    indent "}\n")))
+        (kill-new (buffer-string)))))
+
+  (defun ywb-php-normalize-prop (prop)
+    (let ((name (mapconcat 'upcase-initials (split-string prop "_") "")))
+      (concat (downcase (substring name 0 1)) (substring name 1))))
+
+  (defun my-geben-open-current-file ()
+    (interactive)
+    (let ((bufs (buffer-list))
+          (file buffer-file-name)
+          (line (line-number-at-pos))
+          buf session new-buf)
+      (if file
+          (progn
+            (while (and (not session)
+                        bufs)
+              (setq buf (car bufs)
+                    bufs (cdr bufs)
+                    session (buffer-local-value 'geben-current-session buf)))
+            (if session
+                (with-current-buffer buf
+                  (geben-open-file (concat "file://" file)))
+              (error "no geben session started")))
+        (error "no file associated"))))
+
+  (setq phpunit-create-test-function 'phpunit-create-test-template)
+  (add-to-list 'magic-mode-alist '("\\`<\\?php" . php-mode))
+  (deh-require 'php-doc)
+  (defun my-php-mode-hook ()
+    (add-to-list 'php-imenu-generic-expression
+                 '(nil "^\\s-*\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1))
+    (when (featurep 'php-doc)
+      (define-key php-mode-map [tab] 'php-doc-complete-function)
+      (set (make-local-variable 'eldoc-documentation-function)
+           'php-doc-eldoc-function)
+      (eldoc-mode 1))
+    (deh-require 'phpunit
+      (phpunit-mode 1)
+      (define-key phpunit-mode-map "\C-ctb" 'phpunit-switch)
+      (define-key phpunit-mode-map "\C-ctc" 'phpunit-create-test)
+      (define-key phpunit-mode-map "\C-ctr" 'phpunit-run-test))
+    (local-set-key (kbd "C-c C-v") 'my-geben-open-current-file)
+    (local-set-key (kbd "C-c C-d") 'php-documentor-dwim)
+    (local-set-key (kbd "C-c C-s") 'ywb-php-generate-getters-setters)
+    (local-set-key (kbd "C-c s") 'compile-dwim-compile))
+  (add-hook 'php-mode-hook 'my-php-mode-hook))
