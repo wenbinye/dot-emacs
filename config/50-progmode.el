@@ -528,16 +528,25 @@ With argument, position cursor at end of buffer."
   (setq phpunit-create-test-function 'phpunit-create-test-template)
   (add-to-list 'magic-mode-alist '("\\`<\\?php" . php-mode))
   (deh-require 'php-doc)
+  
+  (defun run-php ()
+    (interactive)
+    (let ((buffer (get-buffer-create "*php*"))
+          (cmd "psysh"))
+      (pop-to-buffer buffer)
+      (unless (comint-check-proc buffer)
+        (make-comint-in-buffer "psysh" buffer cmd))))
+
   (defun my-php-mode-hook ()
     (add-to-list 'php-imenu-generic-expression
                  '(nil "^\\s-*\\(?:\\(?:abstract\\|final\\|private\\|protected\\|public\\|static\\)\\s-+\\)*function\\s-+\\(\\(?:\\sw\\|\\s_\\)+\\)\\s-*(" 1))
     (when (featurep 'php-doc)
-      (define-key php-mode-map [tab] 'php-doc-complete-function)
       (set (make-local-variable 'eldoc-documentation-function)
            'php-doc-eldoc-function)
       (eldoc-mode 1))
     (deh-require 'phpunit
       (phpunit-mode 1)
+      (define-key phpunit-mode-map [tab] 'php-doc-complete-function)
       (define-key phpunit-mode-map "\C-ctb" 'phpunit-switch)
       (define-key phpunit-mode-map "\C-ctc" 'phpunit-create-test)
       (define-key phpunit-mode-map "\C-ctr" 'phpunit-run-test))
