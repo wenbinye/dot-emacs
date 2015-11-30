@@ -1,52 +1,49 @@
-(if (not load-file-name)
-    (error "Load me by M-x load-file RET"))
+(defconst emacs-start-time (current-time))
+(unless noninteractive
+  (message "Loading %s..." load-file-name))
+(setq message-log-max 16384)
 
-;; predefine directory:
-;;  - ywb-startup-dir   : ~/.emacs.d
-;;  - ywb-config-dir    : ~/.emacs.d/config
-;;  - ywb-site-lisp-dir : ~/.emacs.d/site-lisp
-(setq ywb-startup-dir (file-name-directory load-file-name)
-      ywb-config-dir (expand-file-name "config" ywb-startup-dir)
-      ywb-site-lisp-dir (expand-file-name "site-lisp" ywb-startup-dir))
-(add-to-list 'load-path ywb-config-dir)
-(add-to-list 'load-path ywb-site-lisp-dir)
-(let ((default-directory ywb-site-lisp-dir))
-  (load "subdirs.el"))
-;; if no dot-emacs-helper.el, use this to inhibit load errors
-(unless (require 'dot-emacs-helper nil t)
-  (defmacro deh-require-maybe (feature &rest forms)
-    (declare (indent 1))
-    `(progn (when (require ,feature nil t) ,@forms)))
-  (defalias 'deh-require 'deh-require-maybe)
-  (put 'deh-require 'lisp-indent-function 1)
-  (defmacro deh-section (section &rest forms)
-    (declare (indent 1))
-    `(progn ,@forms))
-  (defmacro deh-define-key (map &rest keypairs)
-    "Define a batch of keys.
+(defvar ywb--init-directory (file-name-directory load-file-name))
+(defvar ywb--config-directory (concat ywb--init-directory "config"))
 
-Example:
-  (deh-define-key global-map
-    (\"\\C-m\"        . 'newline-and-indent)
-    (\"\\C-j\"        . 'newline))
-"
-    (declare (indent 1))
-    (cons 'progn
-          (mapcar (lambda (pair)
-                    `(define-key ,map ,(car pair) ,(cdr pair)))
-                  keypairs))))
-;; ready to load my configurations
-(mapc 'load (directory-files ywb-config-dir t "^[0-9]+-.*.el"))
-(server-start)
+(add-to-list 'load-path (concat ywb--init-directory "site-lisp"))
 
-;;; Emacs is not a package manager, and here we load its package manager!
-(require 'package)
-(dolist (source '(("marmalade" . "http://marmalade-repo.org/packages/")
-                  ("elpa" . "http://tromey.com/elpa/")
-                  ;; TODO: Maybe, use this after emacs24 is released
-                  ;; (development versions of packages)
-                  ("melpa" . "http://melpa.milkbox.net/packages/")
-                  ))
-  (add-to-list 'package-archives source t))
+(require 'cl)
+(setq package-archives
+      '(("chaozhuo" . "http://mirrors.chaozhuo.net/elpa/packages/")))
+
 (package-initialize)
-(deh-require 'solarized-dark-theme)
+
+(eval-and-compile
+  (defvar use-package-verbose t)
+  ;; (defvar use-package-expand-minimally t)
+  (eval-after-load 'advice
+    `(setq ad-redefinition-action 'accept))
+  (require 'cl)
+  (require 'use-package))
+
+(defun ywb-generate-loaddefs ()
+  (interactive)
+  (require 'autoload)
+  (let ((generated-autoload-file (expand-file-name "100-autoloads.el" ywb--config-directory)))
+    (update-directory-autoloads (concat ywb--init-directory "site-lisp"))))
+(unless (file-exists-p (expand-file-name "100-autoloads.el" ywb--config-directory))
+  (ywb-generate-loaddefs))
+
+(mapc 'load (directory-files ywb--config-directory t "^[0-9]+-.*.el"))
+
+(when (or window-system t)
+  (let ((elapsed (float-time (time-subtract (current-time)
+                                            emacs-start-time))))
+    (message "Loading %s...done (%.3fs)" load-file-name elapsed))
+  (add-hook 'after-init-hook
+            `(lambda ()
+               (let ((elapsed (float-time (time-subtract (current-time)
+                                                         emacs-start-time))))
+                 (message "Loading %s...done (%.3fs) [after-init]"
+                          ,load-file-name elapsed))) t))
+
+;; debug 
+(setq user-init-file load-file-name)
+(setq confirm-kill-emacs nil)
+(desktop-save-mode 0)
