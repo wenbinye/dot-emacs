@@ -28,7 +28,9 @@
   (set-process-sentinel (get-buffer-process (current-buffer))
                         (lambda (process event) (kill-buffer))))
 (add-hook 'shell-mode-hook 'ywb-shell-mode-hook)
-(add-hook 'shell-dynamic-complete-functions 'bash-completion-dynamic-complete)
+(use-package bash-completion
+  :config
+  (add-hook 'shell-dynamic-complete-functions 'bash-completion-dynamic-complete))
 
 (add-hook 'occur-mode-hook
           (lambda ()

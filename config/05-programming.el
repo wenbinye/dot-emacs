@@ -11,3 +11,7 @@
 
 (add-hook 'emacs-lisp-mode-hook 'ywb-emacs-lisp-mode-hook)
 (add-hook 'lisp-interaction-mode-hook 'ywb-emacs-lisp-mode-hook)
+
+(use-package projectile
+  :config
+  (projectile-global-mode))
