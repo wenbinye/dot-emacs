@@ -25,6 +25,7 @@
   :commands chinese-wbim-use-package
   :init
   (setq chinese-wbim-use-tooltip nil)
+  (setq default-input-method "chinese-wbim")
   (register-input-method
    "chinese-wbim" "euc-cn" 'chinese-wbim-use-package
    "五笔" "汉字五笔输入法" "wb.txt"))
@@ -34,6 +35,7 @@
   (dolist (package '(expand-region
                      chinese-wbim
                      php-mode
+                     s
                      ag
                      helm
                      helm-projectile
@@ -49,4 +51,4 @@
                      color-theme-solarized))
     (unless (package-installed-p package)
       (package-install package))))
-;; yaml-mode
+
