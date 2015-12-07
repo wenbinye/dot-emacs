@@ -1,5 +1,8 @@
 (add-hook 'dired-load-hook
           (lambda ()
+            (add-to-list 'dired-font-lock-keywords
+               (list dired-re-exe
+                     '(".+" (dired-move-to-filename) nil (0 font-lock-type-face))) t)
             (bind-keys :map dired-mode-map
                        ("z" . ywb-dired-compress-dir)
                        ("b" . ywb-dired-list-directory)
@@ -56,4 +59,20 @@
 (use-package ibuffer
   :bind ("C-x C-b" . ibuffer)
   :config
-  (use-package ibuf-ext))
+  (use-package ibuf-ext)
+  (setq ibuffer-saved-filter-groups
+        '(("default"
+           ("*buffer*" (name . "\\*.*\\*"))
+           ("dired" (mode . dired-mode))
+           ("perl" (or (mode . cperl-mode)
+                       (mode . sepia-mode)
+                       (mode . perl-mode)))
+           ("php" (mode . php-mode))
+           ("elisp" (or (mode . emacs-lisp-mode)
+                        (mode . lisp-interaction-mode)))
+           ("prog" (or (mode . c++-mode)
+                       (mode . c-mode)
+                       (mode . java-mode))))))
+  (add-hook 'ibuffer-mode-hook
+            (lambda ()
+              (ibuffer-switch-to-saved-filter-groups "default"))))
