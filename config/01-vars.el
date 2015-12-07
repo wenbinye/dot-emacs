@@ -5,6 +5,20 @@
 (defalias 'yes-or-no-p 'y-or-n-p)
 
 (when window-system
+  (let (default-font zh-font)
+    (cond
+     ((eq window-system 'x)
+      (setq default-font "Ubuntu Mono 16"
+            zh-font (font-spec :family "Sans" :size 16)))
+     ((eq window-system 'w32)
+      (setq default-font "Consolas 11"
+            zh-font (font-spec :family "Microsoft Yahei" :size 14))))
+    (when default-font
+      (set-default-font default-font)
+      (setq fontset (frame-parameter nil 'font))
+      (dolist (charset '(kana han symbol cjk-misc bopomofo))
+        (set-fontset-font fontset charset zh-font))
+      (add-to-list 'default-frame-alist `(font . ,fontset))))
   (tool-bar-mode 0))
 
 (custom-set-variables

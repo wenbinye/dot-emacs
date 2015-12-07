@@ -28,9 +28,6 @@
   (set-process-sentinel (get-buffer-process (current-buffer))
                         (lambda (process event) (kill-buffer))))
 (add-hook 'shell-mode-hook 'ywb-shell-mode-hook)
-(use-package bash-completion
-  :config
-  (add-hook 'shell-dynamic-complete-functions 'bash-completion-dynamic-complete))
 
 (add-hook 'occur-mode-hook
           (lambda ()
@@ -60,4 +57,3 @@
   :bind ("C-x C-b" . ibuffer)
   :config
   (use-package ibuf-ext))
-  

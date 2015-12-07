@@ -30,7 +30,7 @@
 (unless (file-exists-p (expand-file-name "100-autoloads.el" ywb--config-directory))
   (ywb-generate-loaddefs))
 
-(mapc 'load (directory-files ywb--config-directory t "^[0-9]+-.*.el"))
+(mapc 'load (directory-files ywb--config-directory t "^[0-9]+-.*.el$"))
 
 (when (or window-system t)
   (let ((elapsed (float-time (time-subtract (current-time)
