@@ -14,4 +14,7 @@ tramp
 wbx-history
 geben/
 tutorial/
-elpa/archives/
+elpa/
+ido.last
+projectile*
+semanticdb/

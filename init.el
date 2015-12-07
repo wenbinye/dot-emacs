@@ -44,6 +44,6 @@
                           ,load-file-name elapsed))) t))
 
 ;; debug 
-(setq user-init-file load-file-name)
-(setq confirm-kill-emacs nil)
-(desktop-save-mode 0)
+;; (setq user-init-file load-file-name)
+;; (setq confirm-kill-emacs nil)
+;; (desktop-save-mode 0)
