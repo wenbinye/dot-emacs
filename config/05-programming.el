@@ -16,7 +16,11 @@
   :config
   (projectile-global-mode))
 
-(use-package pde-load)
+(use-package pde-load
+  :config
+  (eval-after-load "imenu"
+    '(defalias 'imenu--completion-buffer 'pde-ido-imenu-completion))
+  (setq compilation-buffer-name-function 'pde-compilation-buffer-name))
 
 (defun ywb-geben-open-current-file ()
   (interactive)
@@ -70,5 +74,9 @@
       (make-comint-in-buffer "psysh" buffer cmd))))
 
 (use-package ggtags
+  :bind ("M-." . ggtags-find-tag-dwim)
   :config
   (set-default 'completion-at-point-functions '(ggtags-completion-at-point)))
+
+(use-package zephir-mode
+  :commands zephir-mode)

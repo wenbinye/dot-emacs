@@ -1,4 +1,9 @@
 ;;;###autoload
+(defun ywb-dired-copy-full-filename ()
+  (interactive)
+  (dired-copy-filename-as-kill 0))
+
+;;;###autoload
 (defun ywb-dired-w3m-visit (file)
   (interactive (list (dired-get-filename nil t)))
   (w3m-goto-url (concat "file://" file)))

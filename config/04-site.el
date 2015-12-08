@@ -36,6 +36,7 @@
                      chinese-wbim
                      php-mode
                      s
+                     pde
                      ag
                      helm
                      helm-projectile

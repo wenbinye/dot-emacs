@@ -11,6 +11,7 @@
 (bind-keys :map ywb-ctrl-c-map
            ("$" . toggle-truncate-lines)
            ("b" . ywb-create/switch-scratch)
+           ("f" . comint-dynamic-complete-filename)
            ("h" . help-dwim)
            ("i" . imenu)
            ("j" . ffap)

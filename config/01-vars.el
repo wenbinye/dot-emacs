@@ -25,7 +25,6 @@
  '(auto-image-file-mode t)
  '(backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
  '(column-number-mode t)
- '(comint-input-ring-file-name "~/.emacs.d/shell-history")
  '(confirm-kill-emacs (quote y-or-n-p))
  '(delete-old-versions t)
  '(desktop-save-mode t)

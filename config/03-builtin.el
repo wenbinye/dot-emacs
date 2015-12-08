@@ -7,6 +7,9 @@
                        ("z" . ywb-dired-compress-dir)
                        ("b" . ywb-dired-list-directory)
                        ("E" . ywb-dired-w3m-visit)
+                       ("W" . ywb-dired-copy-full-filename)
+                       ("j" . ido-find-file)
+                       ("J" . woman-dired-find-file)
                        ([? ] . ywb-dired-count-dir-size)
                        ("r" . wdired-change-to-wdired-mode)
                        ("C-q" . ywb-dired-quickview)
@@ -31,6 +34,11 @@
   (set-process-sentinel (get-buffer-process (current-buffer))
                         (lambda (process event) (kill-buffer))))
 (add-hook 'shell-mode-hook 'ywb-shell-mode-hook)
+(eval-after-load "shell"
+  '(progn
+     (defadvice shell-cd (after rename-buffer)
+       (rename-buffer (concat "*shell: " default-directory "*") t))
+     (ad-activate 'shell-cd)))
 
 (add-hook 'occur-mode-hook
           (lambda ()
@@ -60,6 +68,14 @@
   :bind ("C-x C-b" . ibuffer)
   :config
   (use-package ibuf-ext)
+  (define-ibuffer-sorter filename/process
+    "Sort buffers by associated file name"
+    (:description "file name")
+    (apply 'string<
+           (mapcar (lambda (buf)
+                     (with-current-buffer (car buf)
+                       (or buffer-file-name default-directory)))
+                   (list a b))))
   (setq ibuffer-saved-filter-groups
         '(("default"
            ("*buffer*" (name . "\\*.*\\*"))

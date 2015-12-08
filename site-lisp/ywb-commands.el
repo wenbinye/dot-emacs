@@ -188,7 +188,7 @@
   (require 'tramp)
   (let* ( ;; We bind the variable `file-name-history' locally so we can
          ;; use a separate history list for "root" files.
-         (file-name-history find-file-root-history)
+         (file-name-history ywb-find-file-root-history)
          (name (or buffer-file-name default-directory))
          (tramp (and (tramp-tramp-file-p name)
                      (tramp-dissect-file-name name)))
@@ -203,7 +203,7 @@
     (when (setq file (read-file-name "Find file (UID = 0): " dir path))
       (find-file (concat root-prefix file))
       ;; If this all succeeded save our new history list.
-      (setq find-file-root-history file-name-history)
+      (setq ywb-find-file-root-history file-name-history)
       ;; allow some user customization
       (run-hooks 'find-file-root-hook))))
 
