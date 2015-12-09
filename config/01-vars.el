@@ -35,10 +35,11 @@
  '(hippie-expand-try-functions-list
    (quote
     (try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list try-expand-dabbrev try-expand-line try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
- '(ibuffer-default-sorting-mode (quote major-mode))
  '(ido-enable-regexp t)
  '(ido-everywhere t)
  '(ido-mode (quote both) nil (ido))
+ '(imenu-tree-auto-update t)
+ '(pde-extra-setting nil)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(kill-whole-line t)

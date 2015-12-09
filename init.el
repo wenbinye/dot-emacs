@@ -42,7 +42,9 @@
                                                          emacs-start-time))))
                  (message "Loading %s...done (%.3fs) [after-init]"
                           ,load-file-name elapsed))) t))
-
+(server-start)
+(setenv "EDITOR" "emacsclient")
+(setenv "PAGER" "cat")
 ;; debug 
 ;; (setq user-init-file load-file-name)
 ;; (setq confirm-kill-emacs nil)
