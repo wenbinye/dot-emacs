@@ -56,7 +56,7 @@
      (bind-key "C-c C-v" 'ywb-geben-open-current-file php-mode-map)
      (use-package php-doc
        :config
-       (bind-key [?\t] 'php-doc-complete-function php-mode-map))
+       (bind-key [tab] 'php-doc-complete-function php-mode-map))
      (use-package phpunit
        :config
        (bind-key "C-c t b" 'phpunit-switch phpunit-mode-map)
@@ -80,3 +80,8 @@
 
 (use-package zephir-mode
   :commands zephir-mode)
+
+(use-package web-mode
+  :mode "\\.\\(volt\\|html\\)\\'"
+  :bind ("C-c C-v" . browse-url-of-buffer))
+

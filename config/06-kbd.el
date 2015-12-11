@@ -36,6 +36,7 @@
 (bind-keys :prefix-map ywb-ctrl-c-c-prefix-map
            :prefix "C-c c"
            ("f" . find-library)
-           ("v" . view-mode))
+           ("v" . view-mode)
+           ("c" . chinese-wbim-table-add-word))
 
 (bind-key [?\t] 'comint-dynamic-complet minibuffer-local-map)

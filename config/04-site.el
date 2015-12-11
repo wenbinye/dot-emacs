@@ -32,24 +32,30 @@
 
 (defun ywb-install-packages ()
   (interactive)
-  (dolist (package '(expand-region
-                     chinese-wbim
-                     php-mode
-                     s
-                     pde
-                     ag
-                     helm
-                     helm-projectile
-                     markdown-mode
-                     projectile
-                     yaml-mode
-                     dockerfile-mode
-                     geben
-                     bash-completion
-                     ggtags
-                     auto-complete
-                     color-theme
-                     color-theme-solarized))
+  (dolist (package '(
+ag
+auto-complete
+bash-completion
+browse-kill-ring
+chinese-wbim
+color-theme
+color-theme-solarized
+dockerfile-mode
+expand-region
+gradle-mode
+geben
+ggtags
+helm
+helm-projectile
+markdown-mode
+pde
+php-mode
+projectile
+s
+scss-mode
+web-mode
+yaml-mode
+                     ))
     (unless (package-installed-p package)
       (package-install package))))
 

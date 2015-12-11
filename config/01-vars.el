@@ -34,7 +34,7 @@
  '(dired-omit-files "^\\.")
  '(hippie-expand-try-functions-list
    (quote
-    (try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list try-expand-dabbrev try-expand-line try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
+    (try-expand-list try-expand-dabbrev try-expand-line try-expand-all-abbrevs try-expand-dabbrev-all-buffers try-expand-line-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol)))
  '(ido-enable-regexp t)
  '(ido-everywhere t)
  '(ido-mode (quote both) nil (ido))
@@ -53,4 +53,5 @@
  '(tab-width 4)
  '(uniquify-buffer-name-style (quote post-forward-angle-brackets) nil (uniquify))
  '(version-control t)
+ '(winner-mode t)
  '(woman-cache-filename "~/.wmncach.el"))

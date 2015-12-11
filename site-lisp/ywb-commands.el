@@ -238,6 +238,29 @@
     (toggle-read-only 1)
     (display-buffer (current-buffer))))
 
+;;;###autoload
+(defun ywb-image-display-info ()
+  (interactive)
+  (let ((image (image-get-display-property))
+        info)
+    (setq info
+          (list
+           (cons "File Size"
+                 (let ((size (length (plist-get (cdr image) :data))))
+                   (if (> size (* 10 1024))
+                       (format "%.2f kb" (/ size 1024))
+                     size)))
+           (cons "Image Type" (plist-get (cdr image) :type))
+           (cons "Image Size"
+                 (let ((size (image-size image t)))
+                   (format "%d x %d pixels" (car size) (cdr size))))))
+    (with-current-buffer (get-buffer-create "*image-info*")
+      (erase-buffer)
+      (dolist (item info)
+        (insert (format "%12s: %s\n"
+                        (propertize (car item) 'face 'bold)
+                        (cdr item))))
+      (display-buffer (current-buffer)))))
 (provide 'ywb-commands)
 
 ;;; ywb-commands.el ends here

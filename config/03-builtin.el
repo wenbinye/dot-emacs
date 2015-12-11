@@ -10,6 +10,7 @@
                        ("W" . ywb-dired-copy-full-filename)
                        ("j" . ido-find-file)
                        ("J" . woman-dired-find-file)
+                       ("M-o" . dired-omit-mode)
                        ([? ] . ywb-dired-count-dir-size)
                        ("r" . wdired-change-to-wdired-mode)
                        ("C-q" . ywb-dired-quickview)
@@ -92,3 +93,6 @@
   (add-hook 'ibuffer-mode-hook
             (lambda ()
               (ibuffer-switch-to-saved-filter-groups "default"))))
+
+(eval-after-load "image-mode"
+  '(define-key image-mode-map "I" 'ywb-image-display-info))
