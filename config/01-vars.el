@@ -47,6 +47,7 @@
  '(outline-minor-mode-prefix "^C^O")
  '(read-file-name-completion-ignore-case t)
  '(safe-local-variable-values (quote ((firestarter . ert-run-tests-interactively))))
+ '(sentence-end "\\([。！？。！？]\\|……\\|[.?!][]\"')}]*\\($\\|[ \t]\\)\\)[ \t\n]*")
  '(scroll-bar-mode nil)
  '(sentence-end-double-space nil)
  '(show-paren-mode t)

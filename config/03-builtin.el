@@ -96,3 +96,5 @@
 
 (eval-after-load "image-mode"
   '(define-key image-mode-map "I" 'ywb-image-display-info))
+
+(setenv "PATH" (mapconcat 'identity exec-path ":"))

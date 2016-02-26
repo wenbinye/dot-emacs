@@ -87,8 +87,8 @@ See `windata-display-buffer' for setup the arguments."
   :group 'php-doc)
 
 (defcustom php-doc-browser-function
-  (if (featurep 'w3m-load)
-      'php-doc-w3m
+  (if (or (autoloadp 'eww) (fboundp 'eww))
+      'php-doc-eww
     browse-url-browser-function)
   "*Function to browse html file"
   :type 'function
@@ -167,7 +167,7 @@ See `windata-display-buffer' for setup the arguments."
   (let ((browse-url-browser-function php-doc-browser-function)
         (file (php-doc-function-file sym)))
     (if (file-exists-p file)
-        (browse-url file))))
+        (browse-url (concat "file://" file)))))
 
 (defun php-doc-tree ()
   (interactive)
@@ -214,12 +214,12 @@ See `windata-display-buffer' for setup the arguments."
         (browse-url (concat "file://" file))
       (tree-mode-toggle-expand))))
 
-(defun php-doc-w3m (url &rest ignore)
+(defun php-doc-eww (url &rest ignore)
   (let ((win (next-window))
         buf)
     (save-window-excursion
       (select-window win)
-      (w3m-goto-url url)
+      (eww-browse-url url)
       (setq buf (current-buffer)))
     (display-buffer buf)))
 

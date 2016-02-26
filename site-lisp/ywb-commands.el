@@ -261,6 +261,89 @@
                         (propertize (car item) 'face 'bold)
                         (cdr item))))
       (display-buffer (current-buffer)))))
+
+;;;###autoload
+(defun ywb-php-generate-getters-setters ()
+    (interactive)
+    (let ((prop-re "\\(?:protected\\|private\\)\\s-+\\$\\([_a-zA-Z][a-zA-Z0-9_]+\\)")
+          (method-re "public\\s-+function\\s-+get\\([a-zA-Z0-9_]+\\)")
+          (indent "    ")
+          exists-getters props name)
+      (save-excursion
+        (save-restriction
+          (if (and mark-active transient-mark-mode)
+              (narrow-to-region (region-beginning) (region-end)))
+          (goto-char (point-min))
+          (while (re-search-forward prop-re nil t)
+            (setq props (cons (match-string 1) props)))
+          (widen)
+          (goto-char (point-min))
+          (while (re-search-forward method-re nil t)
+            (add-to-list 'exists-getters (cons (downcase (match-string 1)) t)))))
+      (with-temp-buffer
+        (dolist (prop (nreverse props))
+          (setq name (ywb-php-normalize-prop prop))
+          (when (not (assoc (downcase name) exists-getters))
+            (insert "\n")
+            (insert indent "public function get" (upcase-initials name) "()\n"
+                    indent "{\n"
+                    indent indent "return $this->" prop ";\n"
+                    indent "}\n\n")
+            (insert indent "public function set" (upcase-initials name) "($" name ")\n"
+                    indent "{\n"
+                    indent indent "$this->" prop " = $" name ";\n"
+                    indent indent "return $this;\n"
+                    indent "}\n")))
+        (kill-new (buffer-string)))))
+
+(defun ywb-php-normalize-prop (prop)
+  (let ((name (mapconcat 'upcase-initials (split-string prop "_") "")))
+    (concat (downcase (substring name 0 1)) (substring name 1))))
+
+(defun ywb-geben-open-current-file ()
+  (interactive)
+  (let ((bufs (buffer-list))
+        (file buffer-file-name)
+        (line (line-number-at-pos))
+        buf session new-buf)
+    (if file
+        (progn
+          (while (and (not session)
+                      bufs)
+            (setq buf (car bufs)
+                  bufs (cdr bufs)
+                  session (buffer-local-value 'geben-current-session buf)))
+          (if session
+              (with-current-buffer buf
+                (geben-open-file (concat "file://" file)))
+            (error "no geben session started")))
+      (error "no file associated"))))
+
+(defun ywb-php-auto-use()
+  (interactive)
+  (require 'pde-project)
+  (let ((root (pde-detect-project-root))
+        cmd retval)
+    (setq cmd (cl-find-if 'file-exists-p (list (concat root "bin/phalconx")
+                                               (concat root "vendor/bin/phalconx"))))
+    (shell-command-on-region
+     (point-min) (point-max)
+     (concat cmd " auto-use -")
+     (current-buffer) nil nil t)))
+
+(defun ywb-url-hexify-region (beg end)
+  (interactive "r")
+  (let ((str (url-hexify-string (buffer-substring beg end))))
+    (delete-region beg end)
+    (insert str)))
+
+;;;###autoload
+(defun ywb-url-unhex-region (beg end)
+  (interactive "r")
+  (let ((str (url-unhex-string (buffer-substring beg end))))
+    (delete-region beg end)
+    (insert str)))
+
 (provide 'ywb-commands)
 
 ;;; ywb-commands.el ends here

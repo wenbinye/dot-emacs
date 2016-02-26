@@ -22,25 +22,6 @@
     '(defalias 'imenu--completion-buffer 'pde-ido-imenu-completion))
   (setq compilation-buffer-name-function 'pde-compilation-buffer-name))
 
-(defun ywb-geben-open-current-file ()
-  (interactive)
-  (let ((bufs (buffer-list))
-        (file buffer-file-name)
-        (line (line-number-at-pos))
-        buf session new-buf)
-    (if file
-        (progn
-          (while (and (not session)
-                      bufs)
-            (setq buf (car bufs)
-                  bufs (cdr bufs)
-                  session (buffer-local-value 'geben-current-session buf)))
-          (if session
-              (with-current-buffer buf
-                (geben-open-file (concat "file://" file)))
-            (error "no geben session started")))
-      (error "no file associated"))))
-
 (defun ywb-php-mode-hook ()
   (when (fboundp 'php-doc-eldoc-function)
     (set (make-local-variable 'eldoc-documentation-function)
@@ -85,3 +66,9 @@
   :mode "\\.\\(volt\\|html\\)\\'"
   :bind ("C-c C-v" . browse-url-of-buffer))
 
+(use-package groovy-mode
+  :mode "\\.\\(groovy\\|gradle\\)\\'"
+  :config
+  (defun ywb-groovy-mode-hook()
+    (setq c-basic-offset 4))
+  (add-to-list 'groovy-mode-hook 'ywb-groovy-mode-hook))

@@ -48,6 +48,7 @@ ggtags
 helm
 helm-projectile
 markdown-mode
+nginx-mode
 pde
 php-mode
 projectile
