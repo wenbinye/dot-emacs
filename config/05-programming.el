@@ -37,7 +37,8 @@
      (bind-key "C-c C-v" 'ywb-geben-open-current-file php-mode-map)
      (use-package php-doc
        :config
-       (bind-key [tab] 'php-doc-complete-function php-mode-map))
+       (bind-key [tab] 'php-doc-complete-function php-mode-map)
+       (bind-key "TAB" 'php-doc-complete-function php-mode-map))
      (use-package phpunit
        :config
        (bind-key "C-c t b" 'phpunit-switch phpunit-mode-map)
@@ -63,7 +64,7 @@
   :commands zephir-mode)
 
 (use-package web-mode
-  :mode "\\.\\(volt\\|html\\)\\'"
+  :mode "\\.\\(volt\\)\\'"
   :bind ("C-c C-v" . browse-url-of-buffer))
 
 (use-package groovy-mode
@@ -72,3 +73,20 @@
   (defun ywb-groovy-mode-hook()
     (setq c-basic-offset 4))
   (add-to-list 'groovy-mode-hook 'ywb-groovy-mode-hook))
+
+(defun ywb-c-mode-common-hook ()
+  (c-set-style "k&r")
+  (setq c-basic-offset tab-width)
+  (set (make-local-variable 'comment-style) 'indent)
+  (c-toggle-auto-newline t)
+  (hs-minor-mode 1)
+  (eldoc-mode 1)
+  (setq comment-style 'extra-line))
+  ;; (local-set-key "*" 'self-insert-command)
+  ;; (c-toggle-auto-hungry-state - 1)
+  ;; (c-toggle-hungry-state t)
+  ;; (set (make-local-variable 'eldoc-documentation-function)
+  ;;     'clibpc-eldoc-function)
+  ;; (expand-add-abbrevs c-mode-abbrev-table expand-c-sample-expand-list)
+  ;; (tempo-use-tag-list 'tempo-c-tags))
+;; (add-hook 'c-mode-hook 'ywb-c-mode-common-hook)

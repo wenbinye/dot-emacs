@@ -79,7 +79,8 @@
                    (list a b))))
   (setq ibuffer-saved-filter-groups
         '(("default"
-           ("*buffer*" (name . "\\*.*\\*"))
+           ("shell" (mode . shell-mode))
+           ;;("*buffer*" (name . "\\*.*\\*"))
            ("dired" (mode . dired-mode))
            ("perl" (or (mode . cperl-mode)
                        (mode . sepia-mode)
@@ -89,7 +90,19 @@
                         (mode . lisp-interaction-mode)))
            ("prog" (or (mode . c++-mode)
                        (mode . c-mode)
-                       (mode . java-mode))))))
+                       (mode . java-mode))))
+          ("php"
+           ("php" (mode . php-mode))
+           ("dired" (mode . dired-mode))
+           ("perl" (or (mode . cperl-mode)
+                       (mode . sepia-mode)
+                       (mode . perl-mode)))
+           ("elisp" (or (mode . emacs-lisp-mode)
+                        (mode . lisp-interaction-mode)))
+           ("prog" (or (mode . c++-mode)
+                       (mode . c-mode)
+                       (mode . java-mode)))
+           ("*buffer*" (name . "\\*.*\\*")))))
   (add-hook 'ibuffer-mode-hook
             (lambda ()
               (ibuffer-switch-to-saved-filter-groups "default"))))

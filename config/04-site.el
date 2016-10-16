@@ -1,5 +1,6 @@
 (use-package expand-region
-  :bind ("C-=" . er/expand-region))
+  :bind (("C-=" . er/expand-region)
+         ("M-@" . er/expand-region)))
 
 (when window-system
   (use-package color-theme
