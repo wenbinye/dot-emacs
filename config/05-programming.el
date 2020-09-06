@@ -90,3 +90,5 @@
   ;; (expand-add-abbrevs c-mode-abbrev-table expand-c-sample-expand-list)
   ;; (tempo-use-tag-list 'tempo-c-tags))
 ;; (add-hook 'c-mode-hook 'ywb-c-mode-common-hook)
+
+(add-to-list 'auto-mode-alist '("\\.tars$" . java-mode))

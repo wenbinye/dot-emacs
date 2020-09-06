@@ -50,6 +50,12 @@
           (setq current-prefix-arg nil)
           (call-interactively 'clone-indirect-buffer-other-window))))))
 
+(defun ywb-snakecase (s sep)
+  "Convert CamelCase string S to under_score string."
+  (let ((case-fold-search nil))
+    (downcase
+     (replace-regexp-in-string "\\([a-z]\\)\\([A-Z]\\)" (concat "\\1" sep "\\2") s))))
+
 (defun ywb-camelcase-move-word (fw)
   (let ((case-fold-search nil)
         wordpos casepos)
@@ -296,10 +302,90 @@
                     indent "}\n")))
         (kill-new (buffer-string)))))
 
+(defun ywb-php-generate-transformer (field)
+    (interactive "P")
+    (let ((prop-re "\\(?:protected\\|private\\)\\s-+\\$\\([_a-zA-Z][a-zA-Z0-9_]+\\)")
+          (pub-re "public\\s-+\\$\\([_a-zA-Z][a-zA-Z0-9_]+\\)")
+          (indent "    ")
+          props pub-props name)
+      (save-excursion
+        (save-restriction
+          (if (and mark-active transient-mark-mode)
+              (narrow-to-region (region-beginning) (region-end)))
+          (goto-char (point-min))
+          (while (re-search-forward prop-re nil t)
+            (setq props (cons (match-string 1) props))))
+          (goto-char (point-min))
+          (while (re-search-forward pub-re nil t)
+            (setq pub-props (cons (match-string 1) pub-props))))
+      (with-temp-buffer
+        (dolist (prop (nreverse props))
+          (setq name (upcase-initials (ywb-php-normalize-prop prop)))
+          (insert "$model->set" name "($do->" (if field prop (concat "get" name "()")) ");\n"))
+        (dolist (prop (nreverse pub-props))
+          (setq name (upcase-initials (ywb-php-normalize-prop prop)))
+          (insert "$model->" prop " = $do->" (if field prop (concat "get" name "()")) ";\n"))
+        (kill-new (buffer-string)))))
+
+(defun ywb-java-generate-mapping ()
+    (interactive)
+    (let ((prop-re "\\(?:protected\\|private\\)\\s-+[a-zA-Z<>\\.]+\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\)")
+          (indent "    ")
+          props name)
+      (save-excursion
+        (save-restriction
+          (if (and mark-active transient-mark-mode)
+              (narrow-to-region (region-beginning) (region-end)))
+          (goto-char (point-min))
+          (while (re-search-forward prop-re nil t)
+            (setq props (cons (match-string 1) props)))))
+      (with-temp-buffer
+        (dolist (prop (nreverse props))
+          (setq name (ywb-php-normalize-prop prop))
+          (insert "@Mapping(source=\"" name "\", target=\"" name "\");\n"))
+        (kill-new (buffer-string)))))
+
+(defun ywb-java-generate-row-mapper ()
+    (interactive)
+    (let ((prop-re "\\(?:protected\\|private\\)\\s-+[a-zA-Z<>\\.]+\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\)")
+          (indent "    ")
+          props name)
+      (save-excursion
+        (save-restriction
+          (if (and mark-active transient-mark-mode)
+              (narrow-to-region (region-beginning) (region-end)))
+          (goto-char (point-min))
+          (while (re-search-forward prop-re nil t)
+            (setq props (cons (match-string 1) props)))))
+      (with-temp-buffer
+        (dolist (prop (nreverse props))
+          (setq name (upcase-initials (ywb-php-normalize-prop prop)))
+          (insert "model.set" name "(rs.getString(\"" (ywb-snakecase name "_") "\"));\n"))
+        (kill-new (buffer-string)))))
+
+(defun ywb-java-generate-transformer ()
+    (interactive)
+    (let ((prop-re "\\(?:protected\\|private\\)\\s-+[a-zA-Z<>\\.]+\\s-+\\([_a-zA-Z][a-zA-Z0-9_]+\\)")
+          (indent "    ")
+          props name)
+      (save-excursion
+        (save-restriction
+          (if (and mark-active transient-mark-mode)
+              (narrow-to-region (region-beginning) (region-end)))
+          (goto-char (point-min))
+          (while (re-search-forward prop-re nil t)
+            (setq props (cons (match-string 1) props)))))
+      (with-temp-buffer
+        (dolist (prop (nreverse props))
+          (setq name (upcase-initials (ywb-php-normalize-prop prop)))
+          (insert "model.set" name "(other.get" name "());\n"))
+        (kill-new (buffer-string)))))
+
 (defun ywb-php-normalize-prop (prop)
   (let ((name (mapconcat 'upcase-initials (split-string prop "_") "")))
     (concat (downcase (substring name 0 1)) (substring name 1))))
 
+;;;###autoload
 (defun ywb-geben-open-current-file ()
   (interactive)
   (let ((bufs (buffer-list))

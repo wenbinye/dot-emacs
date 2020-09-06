@@ -1,5 +1,7 @@
 (bind-key "C-d" 'ywb-delete-char-or-region)
 (bind-key "C-2" 'set-mark-command)
+(bind-key "M-2" 'set-mark-command)
+(bind-key "M-3" 'mark-sexp)
 (bind-key "C-m" 'newline-and-indent)
 (bind-key "C-j" 'newline)
 (bind-key "M-/" 'hippie-expand)
